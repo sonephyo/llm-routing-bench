@@ -1,0 +1,56 @@
+services:
+  vllm-backend-1:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "7777:8000"
+    volumes:
+      - /tmp/mistral-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    command: --model mistralai/Mistral-7B-v0.1
+    ipc: host
+
+  vllm-backend-2:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "7778:8000"
+    volumes:
+      - /tmp/mistral-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+    command: --model mistralai/Mistral-7B-v0.1
+    ipc: host
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "7779:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "7780:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  grafana-data:

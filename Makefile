@@ -1,38 +1,33 @@
-MODEL = mistralai/Mistral-7B-v0.1
-CACHE = /tmp/mistral-cache
+# ============================================================
+# llm-routing-bench
+# ============================================================
 
-.PHONY: up down logs health test clean
+MODEL = mistralai/Mistral-7B-v0.1
+
+.PHONY: up down health test logs logs-backend-1 logs-backend-2 clean
 
 up:
-	@docker rm -f mistral-gpu-0 mistral-gpu-1 2>/dev/null || true
-	docker run -d --gpus device=0 \
-		-p 7777:8000 \
-		--ipc=host \
-		--name mistral-gpu-0 \
-		-v $(CACHE):/root/.cache/huggingface \
-		vllm/vllm-openai:latest \
-		--model $(MODEL)
-	docker run -d --gpus device=1 \
-		-p 7778:8000 \
-		--ipc=host \
-		--name mistral-gpu-1 \
-		-v $(CACHE):/root/.cache/huggingface \
-		vllm/vllm-openai:latest \
-		--model $(MODEL)
-	@echo "Starting servers... run 'make health' to check"
+	docker compose up -d
+	@echo "Waiting for backends..."
+	@until curl -s http://localhost:7777/health > /dev/null 2>&1; do sleep 5; echo "  Backend 1 loading..."; done
+	@echo "  Backend 1: ready"
+	@until curl -s http://localhost:7778/health > /dev/null 2>&1; do sleep 5; echo "  Backend 2 loading..."; done
+	@echo "  Backend 2: ready"
+	@echo ""
+	@echo "All services running:"
+	@echo "  Backend 1:  http://localhost:7777"
+	@echo "  Backend 2:  http://localhost:7778"
+	@echo "  Prometheus: http://localhost:7779"
+	@echo "  Grafana:    http://localhost:7780"
 
 down:
-	docker rm -f mistral-gpu-0 mistral-gpu-1
-
-logs-0:
-	docker logs -f mistral-gpu-0
-
-logs-1:
-	docker logs -f mistral-gpu-1
+	docker compose down
 
 health:
 	@curl -s http://localhost:7777/health && echo " Backend 1: ready" || echo " Backend 1: not ready"
 	@curl -s http://localhost:7778/health && echo " Backend 2: ready" || echo " Backend 2: not ready"
+	@curl -s http://localhost:7779/-/healthy && echo " Prometheus: ready" || echo " Prometheus: not ready"
+	@curl -s http://localhost:7780/api/health && echo " Grafana: ready" || echo " Grafana: not ready"
 
 test:
 	@echo "Testing Backend 1..."
@@ -43,3 +38,12 @@ test:
 	@curl -s http://localhost:7778/v1/completions \
 		-H "Content-Type: application/json" \
 		-d '{"model": "$(MODEL)", "prompt": "Hello", "max_tokens": 10}'
+	@echo ""
+logs:
+	docker compose logs -f
+
+logs-backend-1:
+	docker compose logs -f vllm-backend-1
+
+logs-backend-2:
+	docker compose logs -f vllm-backend-2
