@@ -6,6 +6,7 @@ import (
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 )
@@ -64,6 +65,7 @@ func main() {
 		router:   rr,
 	}
 
+	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", lbserver.backendHandler)
 
 	http.ListenAndServe(":7999", nil)
