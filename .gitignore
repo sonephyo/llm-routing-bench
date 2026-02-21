@@ -1,0 +1,19 @@
+# binaries
+llm-routing-bench
+*.exe
+
+# Go build cache
+*.test
+*.out
+
+# environment variables
+.env
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# vendor directory (if not committing dependencies)
+vendor/
