@@ -1,17 +1,41 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"llm-routing-bench/router/backend"
-	"log"
 	"net/http"
 )
+
+type LBServer struct {
+	uri      string
+	backends []backend.Backend
+	client   http.Client
+}
+
+func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
+
+	for _, backendPort := range lb.backends {
+		reqUrl := "http://" + lb.uri + ":" + backendPort.PortNumber
+		res, err := lb.client.Get(reqUrl)
+		if err != nil {
+			http.Error(w, "backend error", http.StatusBadGateway)
+			return
+		}
+
+		fmt.Println("Response status:", res.Status)
+
+		body, err := io.ReadAll(res.Body)
+		fmt.Println(string(body))
+		res.Body.Close()
+	}
+}
 
 func main() {
 	uri := "localhost"
 	ports := [...]string{"8000", "8001"}
 	backends := []backend.Backend{}
+	client := http.Client{}
 
 	for _, port := range ports {
 		backends = append(backends, backend.Backend{
@@ -20,26 +44,14 @@ func main() {
 		})
 	}
 
-	client := http.Client{}
-	for _, backendPort := range backends {
-		reqUrl := "http://" + uri + ":" + backendPort.PortNumber
-		res, err := client.Get(reqUrl)
-		if err != nil {
-			log.Println("an error occurred:", err)
-			panic(err)
-		}
-
-		fmt.Println("Response status:", res.Status)
-
-		scanner := bufio.NewScanner(res.Body)
-		for i := 0; scanner.Scan() && i < 5; i++ {
-
-			fmt.Println("Response from " + backendPort.PortNumber + ":" + scanner.Text())
-		}
-		if err := scanner.Err(); err != nil {
-			panic(err)
-		}
-		res.Body.Close()
+	lbserver := LBServer{
+		uri:      uri,
+		backends: backends,
+		client:   client,
 	}
+
+	http.HandleFunc("/", lbserver.backendHandler)
+
+	http.ListenAndServe(":7999", nil)
 
 }
