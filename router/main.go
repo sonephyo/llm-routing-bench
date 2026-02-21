@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"llm-routing-bench/router/backend"
+	"llm-routing-bench/router/loadbalancer"
+	"llm-routing-bench/router/loadbalancer/roundrobin"
 	"net/http"
 )
 
@@ -11,24 +12,27 @@ type LBServer struct {
 	uri      string
 	backends []backend.Backend
 	client   http.Client
+	router   loadbalancer.Router
 }
 
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
-	for _, backendPort := range lb.backends {
-		reqUrl := "http://" + lb.uri + ":" + backendPort.PortNumber
-		res, err := lb.client.Get(reqUrl)
-		if err != nil {
-			http.Error(w, "backend error", http.StatusBadGateway)
-			return
-		}
+	selectedBackend := lb.router.Route(lb.backends)
+	fmt.Println(selectedBackend)
+	// for _, backendPort := range lb.backends {
+	// 	reqUrl := "http://" + lb.uri + ":" + backendPort.PortNumber
+	// 	res, err := lb.client.Get(reqUrl)
+	// 	if err != nil {
+	// 		http.Error(w, "backend error", http.StatusBadGateway)
+	// 		return
+	// 	}
 
-		fmt.Println("Response status:", res.Status)
+	// 	fmt.Println("Response status:", res.Status)
 
-		body, err := io.ReadAll(res.Body)
-		fmt.Println(string(body))
-		res.Body.Close()
-	}
+	// 	body, err := io.ReadAll(res.Body)
+	// 	fmt.Println(string(body))
+	// 	res.Body.Close()
+	// }
 }
 
 func main() {
@@ -44,10 +48,13 @@ func main() {
 		})
 	}
 
+	rr := &roundrobin.RoundRobin{}
+
 	lbserver := LBServer{
 		uri:      uri,
 		backends: backends,
 		client:   client,
+		router:   rr,
 	}
 
 	http.HandleFunc("/", lbserver.backendHandler)
