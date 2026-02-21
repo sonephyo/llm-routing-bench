@@ -6,9 +6,12 @@ import (
 )
 
 type RoundRobin struct {
+	curBackend int
 }
 
 func (rb *RoundRobin) Route(backends []backend.Backend) backend.Backend {
 	fmt.Println("This is RoundRobin")
-	return backends[0]
+	idx := rb.curBackend % len(backends)
+	rb.curBackend++
+	return backends[idx]
 }

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
+	"log"
 	"net/http"
 )
 
@@ -15,24 +17,29 @@ type LBServer struct {
 	router   loadbalancer.Router
 }
 
+type TempResponse struct {
+	Message string
+	Status  string
+}
+
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 	selectedBackend := lb.router.Route(lb.backends)
 	fmt.Println(selectedBackend)
-	// for _, backendPort := range lb.backends {
-	// 	reqUrl := "http://" + lb.uri + ":" + backendPort.PortNumber
-	// 	res, err := lb.client.Get(reqUrl)
-	// 	if err != nil {
-	// 		http.Error(w, "backend error", http.StatusBadGateway)
-	// 		return
-	// 	}
+	w.Header().Set("Content-Type", "application/json")
 
-	// 	fmt.Println("Response status:", res.Status)
+	w.WriteHeader(http.StatusOK)
 
-	// 	body, err := io.ReadAll(res.Body)
-	// 	fmt.Println(string(body))
-	// 	res.Body.Close()
-	// }
+	response := TempResponse{
+		Message: "Selected Port Number: " + selectedBackend.PortNumber,
+		Status:  "OK",
+	}
+
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("error encoding response: %v", err)
+		return
+	}
 }
 
 func main() {
