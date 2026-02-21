@@ -4,7 +4,7 @@
 
 MODEL = mistralai/Mistral-7B-v0.1
 
-.PHONY: up down health test logs logs-backend-1 logs-backend-2 clean
+.PHONY: up down health test logs logs-backend-1 logs-backend-2 clean test-servers-up
 
 up:
 	docker compose up -d
@@ -47,3 +47,6 @@ logs-backend-1:
 
 logs-backend-2:
 	docker compose logs -f vllm-backend-2
+
+test-servers-up:
+	docker compose -f docker-compose.dev.yml up

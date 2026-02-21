@@ -1,0 +1,18 @@
+# Use for development of routing systems without requiring gpu servers
+
+services:
+  server-1:
+    build:
+      context: .
+      dockerfile: router/cmd/fakeserver/Dockerfile
+    container_name: fakeserver-container1
+    ports:
+      - "8000:8000"
+
+  server-2:
+    build:
+      context: .
+      dockerfile: router/cmd/fakeserver/Dockerfile
+    container_name: fakeserver-container2
+    ports:
+      - "8001:8000"
