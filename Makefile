@@ -49,4 +49,7 @@ logs-backend-2:
 	docker compose logs -f vllm-backend-2
 
 test-servers-up:
-	docker compose -f docker-compose.dev.yml up
+	docker compose -f docker-compose.dev.yml up -d
+
+test-servers-down:
+	docker compose -f docker-compose.dev.yml down
