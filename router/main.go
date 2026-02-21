@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"llm-routing-bench/backend"
+	"router/backend"
 )
 
 func main() {
