@@ -16,3 +16,27 @@ services:
     container_name: fakeserver-container2
     ports:
       - "8001:8000"
+
+  router:
+    build:
+      context: .
+      dockerfile: router/Dockerfile
+    container_name: router
+    ports:
+      - "7999:7999"
+    depends_on:
+      - server-1
+      - server-2
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "7998:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./router/dev-monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - router

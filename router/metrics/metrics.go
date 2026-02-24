@@ -18,7 +18,3 @@ var RequestLatency = prometheus.NewHistogramVec(
 	[]string{"backend"},
 )
 
-func init() {
-	prometheus.MustRegister(RequestCount)
-	prometheus.MustRegister(RequestLatency)
-}

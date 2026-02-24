@@ -14,7 +14,7 @@ type RoundRobin struct {
 func (rb *RoundRobin) Route(backends []backend.Backend) backend.Backend {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
-	
+
 	fmt.Println("This is RoundRobin")
 
 	idx := rb.curBackend % len(backends)

@@ -6,9 +6,13 @@ import (
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"llm-routing-bench/router/metrics"
 	"log"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type LBServer struct {
@@ -26,6 +30,7 @@ type TempResponse struct {
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 	selectedBackend := lb.router.Route(lb.backends)
+	metrics.RequestCount.WithLabelValues(selectedBackend.PortNumber).Inc()
 	fmt.Println(selectedBackend)
 	w.Header().Set("Content-Type", "application/json")
 
@@ -65,9 +70,17 @@ func main() {
 		router:   rr,
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
+	// Prometheus Related Endp
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		metrics.RequestCount,
+		metrics.RequestLatency,
+	)
+	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
 	http.HandleFunc("/", lbserver.backendHandler)
 
 	http.ListenAndServe(":7999", nil)
-
 }
