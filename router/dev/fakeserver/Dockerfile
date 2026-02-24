@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o fakeserver ./router/cmd/fakeserver
+RUN go build -o fakeserver ./router/dev/fakeserver
 
 EXPOSE 8000
 

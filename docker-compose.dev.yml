@@ -4,7 +4,7 @@ services:
   server-1:
     build:
       context: .
-      dockerfile: router/cmd/fakeserver/Dockerfile
+      dockerfile: router/dev/fakeserver/Dockerfile
     container_name: fakeserver-container1
     ports:
       - "8000:8000"
@@ -12,7 +12,7 @@ services:
   server-2:
     build:
       context: .
-      dockerfile: router/cmd/fakeserver/Dockerfile
+      dockerfile: router/dev/fakeserver/Dockerfile
     container_name: fakeserver-container2
     ports:
       - "8001:8000"
@@ -35,7 +35,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./router/dev-monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./router/dev/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     depends_on:
