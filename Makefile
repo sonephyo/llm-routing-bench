@@ -39,6 +39,7 @@ test:
 		-H "Content-Type: application/json" \
 		-d '{"model": "$(MODEL)", "prompt": "Hello", "max_tokens": 10}'
 	@echo ""
+	
 logs:
 	docker compose logs -f
 

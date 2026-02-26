@@ -28,10 +28,16 @@ type LBServer struct {
 	router   loadbalancer.Router
 }
 
-type DummyResponse struct {
-	Message  string
-	Status   string
-	Response string
+type ServerResponse struct {
+	Message  string `json:"message"`
+	Status   string `json:"status"`
+	Response string `json:"response"`
+}
+
+type vllmBackendStruct struct {
+	Model     string `json:"model"`
+	Prompt    string `json:"prompt"`
+	MaxTokens int64  `json:"max_tokens"`
 }
 
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,27 +49,88 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	resp, err := http.Get(selectedBackend.BackendURI)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer resp.Body.Close()
+	if mode == "local" {
+		if r.Method != "GET" {
+			response := ServerResponse{
+				Message:  "Request not supported",
+				Status:   "Error",
+				Response: "",
+			}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
+			err := json.NewEncoder(w).Encode(response)
+			if err != nil {
+				log.Printf("error encoding response: %v", err)
+				return
+			}
+			return
+		}
+		resp, err := http.Get(selectedBackend.BackendURI)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer resp.Body.Close()
 
-	response := DummyResponse{
-		Message:  "Selected Port Number: " + selectedBackend.BackendURI,
-		Status:   "OK",
-		Response: string(body),
-	}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		log.Printf("error encoding response: %v", err)
-		return
+		response := ServerResponse{
+			Message:  "Selected Port Number: " + selectedBackend.BackendURI,
+			Status:   "OK",
+			Response: string(body),
+		}
+
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			log.Printf("error encoding response: %v", err)
+			return
+		}
+	} else if mode == "server" {
+		if r.Method != "POST" {
+			response := ServerResponse{
+				Message:  "Request not supported",
+				Status:   "Error",
+				Response: "",
+			}
+
+			err := json.NewEncoder(w).Encode(response)
+			if err != nil {
+				log.Printf("error encoding response: %v", err)
+				return
+			}
+			return
+		}
+		// decoder := json.NewDecoder(r.Body)
+		// var vllmRequestBody vllmBackendStruct
+		// err := decoder.Decode(&vllmRequestBody)
+		// if err != nil {
+		// 	log.Fatalln(err)
+		// }
+
+		resp, err := http.Post(selectedBackend.BackendURI, "application/json", r.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		response := ServerResponse{
+			Message:  "Selected Port Number: " + selectedBackend.BackendURI,
+			Status:   "OK",
+			Response: string(body),
+		}
+
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			log.Printf("error encoding response: %v", err)
+			return
+		}
+
 	}
 }
 

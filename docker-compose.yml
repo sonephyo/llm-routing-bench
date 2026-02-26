@@ -31,6 +31,19 @@ services:
     command: --model mistralai/Mistral-7B-v0.1
     ipc: host
 
+  router:
+    environment:
+      MODE: ${MODE}
+    build:
+      context: .
+      dockerfile: router/Dockerfile
+    container_name: router
+    ports:
+      - "7999:7999"
+    depends_on:
+      - backend-1
+      - backend-2
+
   prometheus:
     image: prom/prometheus:latest
     ports:
