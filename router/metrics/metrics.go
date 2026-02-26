@@ -17,4 +17,3 @@ var RequestLatency = prometheus.NewHistogramVec(
 	},
 	[]string{"backend"},
 )
-

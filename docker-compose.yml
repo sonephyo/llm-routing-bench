@@ -1,5 +1,5 @@
 services:
-  vllm-backend-1:
+  backend-1:
     image: vllm/vllm-openai:latest
     ports:
       - "7777:8000"
@@ -15,7 +15,7 @@ services:
     command: --model mistralai/Mistral-7B-v0.1
     ipc: host
 
-  vllm-backend-2:
+  backend-2:
     image: vllm/vllm-openai:latest
     ports:
       - "7778:8000"

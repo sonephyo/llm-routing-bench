@@ -1,6 +1,6 @@
 package backend
 
 type Backend struct {
-	PortNumber string
+	BackendURI string
 	IsAlive    bool
 }

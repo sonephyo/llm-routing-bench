@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
@@ -16,6 +17,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var (
+	mode string
+)
+
 type LBServer struct {
 	uri      string
 	backends []backend.Backend
@@ -23,26 +28,39 @@ type LBServer struct {
 	router   loadbalancer.Router
 }
 
-type TempResponse struct {
-	Message string
-	Status  string
+type DummyResponse struct {
+	Message  string
+	Status   string
+	Response string
 }
 
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 	selectedBackend := lb.router.Route(lb.backends)
-	metrics.RequestCount.WithLabelValues(selectedBackend.PortNumber).Inc()
+	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
 	fmt.Println(selectedBackend)
-	w.Header().Set("Content-Type", "application/json")
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	response := TempResponse{
-		Message: "Selected Port Number: " + selectedBackend.PortNumber,
-		Status:  "OK",
+	resp, err := http.Get(selectedBackend.BackendURI)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
-	err := json.NewEncoder(w).Encode(response)
+	response := DummyResponse{
+		Message:  "Selected Port Number: " + selectedBackend.BackendURI,
+		Status:   "OK",
+		Response: string(body),
+	}
+
+	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		log.Printf("error encoding response: %v", err)
 		return
@@ -51,17 +69,17 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	mode := os.Getenv("MODE")
-	fmt.Println("Mode selected: ", mode)
+	mode = os.Getenv("MODE")
+	fmt.Println("Selected mode: ", mode)
 
 	uri := "localhost"
-	ports := [...]string{"8000", "8001"}
+	ports := [...]string{"http://backend-1:8000", "http://backend-2:8000"}
 	backends := []backend.Backend{}
 	client := http.Client{}
 
 	for _, port := range ports {
 		backends = append(backends, backend.Backend{
-			PortNumber: port,
+			BackendURI: port,
 			IsAlive:    true,
 		})
 	}

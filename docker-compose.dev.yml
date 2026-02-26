@@ -1,21 +1,21 @@
 # Use for development of routing systems without requiring gpu servers
 
 services:
-  server-1:
+  backend-1:
     build:
       context: .
       dockerfile: router/dev/fakeserver/Dockerfile
     container_name: fakeserver-container1
     ports:
-      - "8000:8000"
+      - "7777:8000"
 
-  server-2:
+  backend-2:
     build:
       context: .
       dockerfile: router/dev/fakeserver/Dockerfile
     container_name: fakeserver-container2
     ports:
-      - "8001:8000"
+      - "7778:8000"
 
   router:
     environment:
@@ -27,8 +27,8 @@ services:
     ports:
       - "7999:7999"
     depends_on:
-      - server-1
-      - server-2
+      - backend-1
+      - backend-2
 
   prometheus:
     image: prom/prometheus:latest
