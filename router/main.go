@@ -9,6 +9,7 @@ import (
 	"llm-routing-bench/router/metrics"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -49,6 +50,10 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	mode := os.Getenv("MODE")
+	fmt.Println("Mode selected: ", mode)
+
 	uri := "localhost"
 	ports := [...]string{"8000", "8001"}
 	backends := []backend.Backend{}

@@ -18,6 +18,8 @@ services:
       - "8001:8000"
 
   router:
+    environment:
+      MODE: ${MODE}
     build:
       context: .
       dockerfile: router/Dockerfile

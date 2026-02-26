@@ -17,3 +17,5 @@ llm-routing-bench
 
 # vendor directory (if not committing dependencies)
 vendor/
+
+mylog.md
