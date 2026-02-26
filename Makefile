@@ -49,6 +49,9 @@ logs-backend-1:
 logs-backend-2:
 	docker compose logs -f vllm-backend-2
 
+server-router-up:
+	DOCKER_BUILDKIT=0 docker compose -f docker-compose.yml --env-file .env up -d
+
 local-router-up:
 	docker compose -f docker-compose.dev.yml build && docker compose -f docker-compose.dev.yml --env-file .env up -d
 

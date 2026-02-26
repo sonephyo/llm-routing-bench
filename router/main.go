@@ -101,14 +101,13 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		// decoder := json.NewDecoder(r.Body)
-		// var vllmRequestBody vllmBackendStruct
-		// err := decoder.Decode(&vllmRequestBody)
-		// if err != nil {
-		// 	log.Fatalln(err)
-		// }
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-		resp, err := http.Post(selectedBackend.BackendURI, "application/json", r.Body)
+		// forward the original bytes
+		resp, err := http.Post(selectedBackend.BackendURI, "application/json", bytes.NewReader(bodyBytes))
 		if err != nil {
 			log.Fatalln(err)
 		}
