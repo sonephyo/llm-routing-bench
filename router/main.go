@@ -107,8 +107,9 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatalln(err)
 		}
 
-		// forward the original bytes
-		resp, err := http.Post(selectedBackend.BackendURI, "application/json", bytes.NewReader(bodyBytes))
+		fmt.Println("Body bytes:", string(bodyBytes))
+
+		resp, err := http.Post(selectedBackend.BackendURI + "/v1/completions", "application/json", bytes.NewReader(bodyBytes))
 		if err != nil {
 			log.Fatalln(err)
 		}
