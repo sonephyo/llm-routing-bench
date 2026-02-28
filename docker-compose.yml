@@ -1,8 +1,7 @@
 services:
   backend-1:
     image: vllm/vllm-openai:latest
-    ports:
-      - "7777:8000"
+    # internal: backend-1:8000
     volumes:
       - /tmp/mistral-cache:/root/.cache/huggingface
     deploy:
@@ -17,8 +16,7 @@ services:
 
   backend-2:
     image: vllm/vllm-openai:latest
-    ports:
-      - "7778:8000"
+    # internal: backend-2:8000 
     volumes:
       - /tmp/mistral-cache:/root/.cache/huggingface
     deploy:
@@ -48,8 +46,6 @@ services:
     image: prom/prometheus:latest
     ports:
       - "7779:9090"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -69,8 +65,6 @@ services:
     image: grafana/grafana:latest
     ports:
       - "7780:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards

@@ -34,8 +34,6 @@ services:
     image: prom/prometheus:latest
     ports:
       - "7998:9090"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./router/dev/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -55,8 +53,6 @@ services:
     image: grafana/grafana:latest
     ports:
       - "8000:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./router/dev/monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./router/dev/monitoring/grafana/dashboards:/var/lib/grafana/dashboards

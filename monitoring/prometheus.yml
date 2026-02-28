@@ -6,13 +6,18 @@ scrape_configs:
   - job_name: 'vllm-backend-1'
     metrics_path: /metrics
     static_configs:
-      - targets: ['host.docker.internal:7777']
+      - targets: ['backend-1:8000']
         labels:
           backend: 'gpu-0'
 
   - job_name: 'vllm-backend-2'
     metrics_path: /metrics
     static_configs:
-      - targets: ['host.docker.internal:7778']
+      - targets: ['backend-2:8000']
         labels:
           backend: 'gpu-1'
+
+  - job_name: router
+    scrape_interval: 10s
+    static_configs:
+    - targets: ['router:7999']
