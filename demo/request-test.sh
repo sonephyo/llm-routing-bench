@@ -8,7 +8,7 @@ PORT=${2:-7778}
 CONCURRENT=${3:-1}
 
 send_request() {
-    curl -s -X POST "http://129.3.20.10:$PORT/v1/completions" \
+    curl -s -X POST "http://localhost:$PORT/v1/completions" \
       -H "Content-Type: application/json" \
       -d '{"model": "mistralai/Mistral-7B-v0.1", "prompt": "The following is a detailed history of computer science", "max_tokens": 150}' > /dev/null
     echo "Request done"
