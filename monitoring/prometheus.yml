@@ -18,6 +18,7 @@ scrape_configs:
           backend: 'gpu-1'
 
   - job_name: router
-    scrape_interval: 10s
     static_configs:
     - targets: ['router:7999']
+      labels:
+        component: 'router'
