@@ -38,7 +38,33 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./router/dev/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     depends_on:
       - router
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "8000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./router/dev/monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./router/dev/monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy 
+
+volumes:
+  grafana-data:
+  prometheus_data:

@@ -1,0 +1,25 @@
+{
+  "title": "Basic Dashboard with Local Router Metrics",
+  "tags": [],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(lb_requests_total[5m])",
+          "legendFormat": "{{method}} {{path}}"
+        }
+      ]
+    }
+  ]
+}
