@@ -20,7 +20,8 @@
         {
           "expr": "vllm:num_requests_waiting",
           "legendFormat": "{{backend}}",
-          "refId": "A"
+          "refId": "A",
+          "interval": "5s"
         }
       ]
     },
@@ -38,7 +39,8 @@
         {
           "expr": "vllm:kv_cache_usage_perc",
           "legendFormat": "{{backend}}",
-          "refId": "A"
+          "refId": "A",
+          "interval": "5s"
         }
       ],
       "fieldConfig": {
@@ -63,7 +65,8 @@
         {
           "expr": "histogram_quantile(0.95, rate(vllm:time_to_first_token_seconds_bucket[1m]))",
           "legendFormat": "{{backend}} p95",
-          "refId": "A"
+          "refId": "A",
+          "interval": "5s"
         }
       ]
     },
@@ -81,7 +84,8 @@
         {
           "expr": "histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket[1m]))",
           "legendFormat": "{{backend}} p95",
-          "refId": "A"
+          "refId": "A",
+          "interval": "5s"
         }
       ]
     },
@@ -99,7 +103,8 @@
         {
           "expr": "vllm:num_requests_running",
           "legendFormat": "{{backend}}",
-          "refId": "A"
+          "refId": "A",
+          "interval": "5s"
         }
       ]
     },
@@ -117,7 +122,8 @@
         {
           "expr": "rate(vllm:generation_tokens_total[1m])",
           "legendFormat": "{{backend}} tokens/sec",
-          "refId": "A"
+          "refId": "A",
+          "interval": "5s"
         }
       ]
     }
