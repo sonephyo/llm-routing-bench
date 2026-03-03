@@ -32,6 +32,7 @@ services:
   router:
     environment:
       MODE: ${MODE}
+      LB_STRATEGY: ${LB_STRATEGY}
     build:
       context: .
       dockerfile: router/Dockerfile

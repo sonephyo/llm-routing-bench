@@ -29,7 +29,7 @@ logs:
 	docker compose logs -f
 
 server-up:
-	DOCKER_BUILDKIT=0 docker compose -f docker-compose.yml build && DOCKER_BUILDKIT=0 docker compose -f docker-compose.yml --env-file .env up -d
+	DOCKER_BUILDKIT=0 docker compose -f docker-compose.yml build && DOCKER_BUILDKIT=0 $(if $(router),LB_STRATEGY=$(router),) docker compose -f docker-compose.yml --env-file .env up -d
 
 server-down:
 	docker compose down
