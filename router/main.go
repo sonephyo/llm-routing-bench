@@ -8,6 +8,7 @@ import (
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/consistanthashing"
+	"llm-routing-bench/router/loadbalancer/roundrobin"
 	"llm-routing-bench/router/metrics"
 	"log"
 	"net/http"
@@ -19,7 +20,9 @@ import (
 )
 
 var (
-	mode string
+	mode       string
+	lbStrategy string
+	rr         loadbalancer.Router
 )
 
 type LBServer struct {
@@ -139,8 +142,8 @@ func main() {
 
 	mode = os.Getenv("MODE")
 	fmt.Println("Selected mode: ", mode)
-
 	lbStrategy = os.Getenv("LB_STRATEGY")
+	fmt.Println("Selected strategy: ", lbStrategy)
 
 	uri := "localhost"
 	ports := [...]string{"http://backend-1:8000", "http://backend-2:8000"}
@@ -154,8 +157,14 @@ func main() {
 		})
 	}
 
-	// rr := roundrobin.NewRoundRobin(backends)
-	rr := consistanthashing.NewConsistantHash(backends)
+	switch lbStrategy {
+	case "roundrobin":
+		rr = roundrobin.NewRoundRobin(backends)
+	case "consistanthashing":
+		rr = consistanthashing.NewConsistantHash(backends)
+	default:
+		log.Fatalln("Invalid lbStrategy")
+	}
 
 	lbserver := LBServer{
 		uri:    uri,
