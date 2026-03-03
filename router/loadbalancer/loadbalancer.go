@@ -2,8 +2,9 @@ package loadbalancer
 
 import (
 	"llm-routing-bench/router/backend"
+	"net/http"
 )
 
 type Router interface {
-	Route() backend.Backend
+	Route(r *http.Request) *backend.Backend
 }

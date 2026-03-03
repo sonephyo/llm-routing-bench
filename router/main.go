@@ -7,7 +7,7 @@ import (
 	"io"
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
-	"llm-routing-bench/router/loadbalancer/roundrobin"
+	"llm-routing-bench/router/loadbalancer/consistanthashing"
 	"llm-routing-bench/router/metrics"
 	"log"
 	"net/http"
@@ -42,7 +42,7 @@ type vllmBackendStruct struct {
 
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
-	selectedBackend := lb.router.Route()
+	selectedBackend := lb.router.Route(r)
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
 	fmt.Println(selectedBackend)
 
@@ -140,6 +140,8 @@ func main() {
 	mode = os.Getenv("MODE")
 	fmt.Println("Selected mode: ", mode)
 
+	lbStrategy = os.Getenv("LB_STRATEGY")
+
 	uri := "localhost"
 	ports := [...]string{"http://backend-1:8000", "http://backend-2:8000"}
 	backends := []backend.Backend{}
@@ -152,7 +154,8 @@ func main() {
 		})
 	}
 
-	rr := roundrobin.NewRoundRobin(backends)
+	// rr := roundrobin.NewRoundRobin(backends)
+	rr := consistanthashing.NewConsistantHash(backends)
 
 	lbserver := LBServer{
 		uri:    uri,

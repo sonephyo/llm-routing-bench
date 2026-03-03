@@ -2,6 +2,7 @@ package roundrobin
 
 import (
 	"llm-routing-bench/router/backend"
+	"net/http"
 	"sync"
 )
 
@@ -17,11 +18,11 @@ func NewRoundRobin(backends []backend.Backend) *RoundRobin {
 	}
 }
 
-func (rb *RoundRobin) Route() backend.Backend {
+func (rb *RoundRobin) Route(r *http.Request) *backend.Backend {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 
 	idx := rb.curBackend % len(rb.backends)
 	rb.curBackend++
-	return rb.backends[idx]
+	return &rb.backends[idx]
 }
