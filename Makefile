@@ -12,8 +12,7 @@ health:
 	@curl -s http://localhost:7779/-/healthy && echo " Prometheus: ready" || echo " Prometheus: not ready"
 	@curl -s http://localhost:7780/api/health && echo " Grafana: ready" || echo " Grafana: not ready"
 
-
-test:
+local-test:
 	@echo "Testing Backend 1..."
 	@curl -s http://localhost:7777/v1/completions \
 		-H "Content-Type: application/json" \
@@ -23,7 +22,9 @@ test:
 		-H "Content-Type: application/json" \
 		-d '{"model": "$(MODEL)", "prompt": "Hello", "max_tokens": 10}'
 	@echo ""
-	
+	@echo "Test Router..."
+		@curl http://localhost:7999
+
 logs:
 	docker compose logs -f
 
@@ -34,7 +35,7 @@ server-down:
 	docker compose down
 
 local-up:
-	docker compose -f docker-compose.dev.yml build && docker compose -f docker-compose.dev.yml --env-file .env up -d
+	docker compose -f docker-compose.dev.yml build && $(if $(router),LB_STRATEGY=$(router),) docker compose -f docker-compose.dev.yml --env-file .env up -d
 
 local-down:
 	docker compose -f docker-compose.dev.yml down
