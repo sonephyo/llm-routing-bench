@@ -8,13 +8,20 @@ import (
 type RoundRobin struct {
 	curBackend int
 	mu         sync.Mutex
+	backends   []backend.Backend
 }
 
-func (rb *RoundRobin) Route(backends []backend.Backend) backend.Backend {
+func NewRoundRobin(backends []backend.Backend) *RoundRobin {
+	return &RoundRobin{
+		backends: backends,
+	}
+}
+
+func (rb *RoundRobin) Route() backend.Backend {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 
-	idx := rb.curBackend % len(backends)
+	idx := rb.curBackend % len(rb.backends)
 	rb.curBackend++
-	return backends[idx]
+	return rb.backends[idx]
 }

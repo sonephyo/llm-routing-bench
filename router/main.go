@@ -23,10 +23,9 @@ var (
 )
 
 type LBServer struct {
-	uri      string
-	backends []backend.Backend
-	client   http.Client
-	router   loadbalancer.Router
+	uri    string
+	client http.Client
+	router loadbalancer.Router
 }
 
 type ServerResponse struct {
@@ -43,14 +42,15 @@ type vllmBackendStruct struct {
 
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
-	selectedBackend := lb.router.Route(lb.backends)
+	selectedBackend := lb.router.Route()
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
 	fmt.Println(selectedBackend)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	if mode == "local" {
+	switch mode {
+	case "local":
 		if r.Method != "GET" {
 			response := ServerResponse{
 				Message:  "Request not supported",
@@ -87,7 +87,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("error encoding response: %v", err)
 			return
 		}
-	} else if mode == "server" {
+	case "server":
 		if r.Method != "POST" {
 			response := ServerResponse{
 				Message:  "Request not supported",
@@ -109,7 +109,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("Body bytes:", string(bodyBytes))
 
-		resp, err := http.Post(selectedBackend.BackendURI + "/v1/completions", "application/json", bytes.NewReader(bodyBytes))
+		resp, err := http.Post(selectedBackend.BackendURI+"/v1/completions", "application/json", bytes.NewReader(bodyBytes))
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -152,13 +152,12 @@ func main() {
 		})
 	}
 
-	rr := &roundrobin.RoundRobin{}
+	rr := roundrobin.NewRoundRobin(backends)
 
 	lbserver := LBServer{
-		uri:      uri,
-		backends: backends,
-		client:   client,
-		router:   rr,
+		uri:    uri,
+		client: client,
+		router: rr,
 	}
 
 	// Prometheus Related Endp

@@ -5,5 +5,5 @@ import (
 )
 
 type Router interface {
-	Route(backends []backend.Backend) backend.Backend
+	Route() backend.Backend
 }
