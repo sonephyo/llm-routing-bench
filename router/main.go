@@ -8,6 +8,7 @@ import (
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/consistanthashing"
+	"llm-routing-bench/router/loadbalancer/leastqueue"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
 	"llm-routing-bench/router/metrics"
 	"log"
@@ -162,6 +163,8 @@ func main() {
 		rr = roundrobin.NewRoundRobin(backends)
 	case "consistanthashing":
 		rr = consistanthashing.NewConsistantHash(backends)
+	case "leastqueue":
+		rr = leastqueue.NewLeastQueue(backends)
 	default:
 		log.Fatalln("Invalid lbStrategy")
 	}
