@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-func GetFilteredMetrics(url string, keep []string) {
+func GetFilteredMetrics(url string, keep []string) (map[string]float64, error) {
 
 	resp, err := http.Get(url + "/metrics")
 	if err != nil {
@@ -34,13 +34,16 @@ func GetFilteredMetrics(url string, keep []string) {
 		keepSet[name] = true
 	}
 
+	result := make(map[string]float64)
 	for name, family := range mf {
 		if !keepSet[name] {
 			continue
 		}
 
 		for _, m := range family.GetMetric() {
-			fmt.Printf("%s %v\n", name, m.GetGauge().GetValue())
+			result[name] = m.GetCounter().GetValue()
 		}
 	}
+
+	return result, nil
 }
