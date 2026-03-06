@@ -40,5 +40,5 @@ func (lq *LeastQueue) Route(r *http.Request) *backend.Backend {
 		}
 
 	}
-	return selectedServer 
+	return selectedServer
 }
