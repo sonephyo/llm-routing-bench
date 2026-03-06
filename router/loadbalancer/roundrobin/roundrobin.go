@@ -23,6 +23,10 @@ func (rb *RoundRobin) Route(r *http.Request) *backend.Backend {
 	defer rb.mu.Unlock()
 
 	idx := rb.curBackend % len(rb.backends)
+	if idx == 0 {
+		rb.curBackend = 0
+	}
 	rb.curBackend++
+
 	return &rb.backends[idx]
 }
