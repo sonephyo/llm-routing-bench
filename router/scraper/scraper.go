@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"log"
