@@ -40,7 +40,7 @@ func GetFilteredMetrics(url string, keep []string) (map[string]float64, error) {
 		}
 
 		for _, m := range family.GetMetric() {
-			result[name] = m.GetCounter().GetValue()
+			result[name] = m.GetGauge().GetValue()
 		}
 	}
 
