@@ -35,9 +35,6 @@ func (lq *LeastQueue) Route(r *http.Request) *backend.Backend {
 
 		queueDepth := metrics["vllm:num_requests_running"] + metrics["vllm:num_requests_waiting"]
 		if queueDepth < minVal {
-			log.Println(lq.backends[i].BackendURI + " - number of queue depth : ")
-			log.Println(queueDepth)
-			log.Println(".........")
 			selectedServer = &lq.backends[i]
 			minVal = queueDepth
 		}
