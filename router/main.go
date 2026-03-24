@@ -47,6 +47,10 @@ type vllmBackendStruct struct {
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 	selectedBackend := lb.router.Route(r)
+	if selectedBackend == nil {
+		log.Fatalln("No backend is being returned")
+		return
+	}
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
 	fmt.Println(selectedBackend)
 
@@ -110,8 +114,6 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		fmt.Println("Body bytes:", string(bodyBytes))
 
 		resp, err := http.Post(selectedBackend.BackendURI+"/v1/completions", "application/json", bytes.NewReader(bodyBytes))
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/scraper"
 	"log"
+	"math"
 	"net/http"
 )
 
@@ -18,9 +19,26 @@ func NewLeastQueue(backends []backend.Backend) *LeastQueue {
 }
 
 func (lq *LeastQueue) Route(r *http.Request) *backend.Backend {
-	for i := range lq.backends {
-		scraper.GetFilteredMetrics(lq.backends[i].BackendURI, []string{"vllm:num_requests_running"})
+	if len(lq.backends) == 0 {
+		return nil
 	}
-	log.Println()
-	return &lq.backends[0]
+	var selectedServer *backend.Backend
+	minVal := math.Inf(1)
+	for i := range lq.backends {
+		metrics, err := scraper.GetFilteredMetrics(lq.backends[i].BackendURI, []string{
+			"vllm:num_requests_running",
+			"vllm:num_requests_waiting",
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		queueDepth := metrics["vllm:num_requests_running"] + metrics["vllm:num_requests_waiting"]
+		if queueDepth < minVal {
+			selectedServer = &lq.backends[i]
+			minVal = queueDepth
+		}
+
+	}
+	return selectedServer
 }
