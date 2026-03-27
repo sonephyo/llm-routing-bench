@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'llm-routing-bench',
+  title: 'LLM Routing Benchmark',
   tagline: 'Measuring how routing strategies affect tail latency in LLM inference serving',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -33,6 +33,18 @@ const config: Config = {
     locales: ['en'],
   },
 
+  plugins: [
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      {
+        hashed: true,
+        indexDocs: true,
+        indexPages: true,
+        docsRouteBasePath: '/docs',
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
@@ -57,7 +69,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'llm-routing-bench',
+      title: 'LLM Routing Benchmark',
       items: [
         {
           type: 'docSidebar',
