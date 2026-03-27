@@ -15,6 +15,8 @@ make local-up router=<strategy>
 
 Cycles through the list of backends sequentially. Each new request goes to the next backend in rotation, wrapping back to the first after the last.
 
+Use `Mutex` for the decision of choosing backend servers.
+
 Simple and stateless. Makes no assumptions about request cost or backend load. Works well when requests are uniform and backends are symmetric.
 
 ---
@@ -24,8 +26,6 @@ Simple and stateless. Makes no assumptions about request cost or backend load. W
 Uses an FNV-32a hash of the request URL to deterministically map requests to a backend on a consistent hash ring.
 
 The same request URL will always route to the same backend, which can improve cache locality. Useful when requests with shared context (e.g. same prompt prefix or user session) benefit from hitting the same replica.
-
-Note: the flag name is spelled `consistanthashing` (single 's' in "consistent").
 
 ---
 
@@ -47,7 +47,7 @@ Read the kv cache usage of the vllm servers and route based on the lowest kv cac
 
 At high load, kv cache utilization reaches 100%, in which load balancing strategy becomes invalid.
 
-::: note
+:::note
 `least-kvcache` is work in progress. More information will be added.
 :::
 
