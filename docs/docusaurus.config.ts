@@ -7,7 +7,6 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'llm-routing-bench',
   tagline: 'Measuring how routing strategies affect tail latency in LLM inference serving',
-  favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -54,8 +53,6 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -110,8 +107,25 @@ const config: Config = {
             },
           ],
         },
+        {
+          title: 'Author',
+          items: [
+            {
+              label: 'GitHub @sonephyo',
+              href: 'https://github.com/sonephyo',
+            },
+            {
+              label: 'LinkedIn',
+              href: 'https://www.linkedin.com/in/soney7/',
+            },
+            {
+              label: 'Email',
+              href: 'mailto:sonephyo7777777@gmail.com',
+            },
+          ],
+        },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} llm-routing-bench. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Sone Phyo. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

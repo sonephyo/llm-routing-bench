@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'contributing',
+    'about',
   ],
 
   researchSideBar: [
