@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'reference/makefile-reference',
       ],
     },
+    'contributing',
   ],
 
   researchSideBar: [
