@@ -46,18 +46,20 @@ type vllmBackendStruct struct {
 
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Select backend to send out request
 	selectedBackend := lb.router.Route(r)
 	if selectedBackend == nil {
 		log.Fatalln("No backend is being returned")
 		return
 	}
+	
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
-	fmt.Println(selectedBackend)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	switch mode {
+	// Local mode uses fake servers (HTTP servers) on local machine
 	case "local":
 		if r.Method != "GET" {
 			response := ServerResponse{
@@ -95,6 +97,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("error encoding response: %v", err)
 			return
 		}
+	// Local mode uses vllm servers as defined in docker-compose.yml
 	case "server":
 		if r.Method != "POST" {
 			response := ServerResponse{
@@ -148,10 +151,8 @@ func main() {
 	lbStrategy = os.Getenv("LB_STRATEGY")
 	fmt.Println("Selected strategy: ", lbStrategy)
 
-	uri := "localhost"
 	ports := [...]string{"http://backend-1:8000", "http://backend-2:8000"}
 	backends := []backend.Backend{}
-	client := http.Client{}
 
 	for _, port := range ports {
 		backends = append(backends, backend.Backend{
@@ -172,8 +173,6 @@ func main() {
 	}
 
 	lbserver := LBServer{
-		uri:    uri,
-		client: client,
 		router: rr,
 	}
 

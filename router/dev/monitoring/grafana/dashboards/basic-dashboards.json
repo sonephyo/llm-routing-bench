@@ -1,23 +1,188 @@
 {
-  "title": "Basic Dashboard with Local Router Metrics",
+  "title": "Load Balancer & Go Runtime Metrics",
   "tags": [],
   "timezone": "browser",
   "editable": true,
   "schemaVersion": 36,
+  "refresh": "1s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
-      "title": "Request Rate",
+      "title": "Request Rate per Backend",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
       "datasource": {
         "type": "prometheus"
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "rate(lb_requests_total[5m])",
-          "legendFormat": "{{method}} {{path}}"
+          "expr": "rate(lb_requests_total[10s])",
+          "legendFormat": "{{backend}}",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Goroutines",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_goroutines",
+          "legendFormat": "goroutines",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Heap Memory In Use",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_memstats_heap_inuse_bytes",
+          "legendFormat": "heap in use",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "GC Pause Duration (Avg)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_gc_duration_seconds_sum / go_gc_duration_seconds_count",
+          "legendFormat": "avg GC pause",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Next GC Threshold",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_memstats_next_gc_bytes",
+          "legendFormat": "next GC bytes",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "CPU Time",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "process_cpu_seconds_total",
+          "legendFormat": "CPU seconds",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "OS Threads",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_threads",
+          "legendFormat": "OS threads",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "GOMAXPROCS Setting",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_sched_gomaxprocs_threads",
+          "legendFormat": "GOMAXPROCS",
+          "interval": "1s"
         }
       ]
     }
