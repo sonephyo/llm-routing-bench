@@ -1,47 +1,39 @@
 ---
-sidebar_position: 2
+title: Introduction
+sidebar_position: 1
 ---
 
-# Tutorial Intro
+# llm-routing-bench
 
-Let's discover **Docusaurus in less than 5 minutes**.
+A Go-based load balancer for LLM inference servers with pluggable routing strategies and integrated benchmarking. The goal is to measure how different routing strategies affect tail latency (p95/p99) in LLM inference serving.
 
-## Getting Started
+To read more about this project motivation and system architecture, refer to [Research](./research/motivation).
 
-Get started by **creating a new site**.
+## Architecture
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+<img id="architecture-diagram" src="/img/architecture-diagram.png" alt="Architecture Diagram" width="500" />
 
-### What you'll need
+## Modes
 
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+The router supports two modes, set via the `MODE` env variable:
 
-## Generate a new site
+- **`server`** — Proxies POST requests to backend `/v1/completions`. Requires real vLLM instances and an NVIDIA GPU.
+- **`local`** — Proxies GET requests to lightweight fake backends. No GPU required, suitable for development and testing without GPU.
 
-Generate a new Docusaurus site using the **classic template**.
+## Routing Strategies
 
-The classic template will automatically be added to your project after you run the command:
+| Strategy | Flag | Description |
+|---|---|---|
+| Round Robin | `roundrobin` | Cycles through backends sequentially |
+| Consistent Hashing | `consistanthashing` | FNV-32a hash of request URL maps to a backend on a consistent ring |
+| Least Queue | `leastqueue` | Scrapes `vllm:num_requests_running` from each backend and routes to the least loaded (WIP) |
+| Least KV Cache | `least-kvcache` | TBA |
 
-```bash
-npm init docusaurus@latest my-website classic
-```
+## Where to Go Next
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+- [Prerequisites](./getting-started/prerequisites) — what you need before running anything
+- [Dev Mode](./getting-started/dev-mode) — run the stack locally without a GPU
+- [Production Mode](./getting-started/production-mode) — run with real vLLM on GPU hardware
+- [Routing Strategies Reference](./reference/routing-strategies) — flag names and behavior details
+- [Benchmarking](./reference/benchmarking) — how to run load tests and read the output
+- [Metrics](./reference/metrics) — Prometheus metrics exposed by the router

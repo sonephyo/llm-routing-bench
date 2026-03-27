@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'LLM Routing Bench',
-  tagline: 'Dinosaurs are cool',
+  title: 'llm-routing-bench',
+  tagline: 'Measuring how routing strategies affect tail latency in LLM inference serving',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -15,15 +15,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://sonephyo.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/llm-routing-bench/',
 
   // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'sonephyo',
+  projectName: 'llm-routing-bench',
 
   onBrokenLinks: 'throw',
 
@@ -44,25 +43,9 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/sonephyo/llm-routing-bench/tree/main/docs/',
         },
-        blog: {
-          routeBasePath: "/research",
-          path: "./blog",
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -77,11 +60,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'LLM Routing Bench',
-      logo: {
-        alt: 'LLM Routing Benchmark Logo',
-        src: 'img/logo.svg',
-      },
+      title: 'llm-routing-bench',
       items: [
         {
           type: 'docSidebar',
@@ -89,9 +68,9 @@ const config: Config = {
           position: 'left',
           label: 'Documentation',
         },
-        {to: '/research', label: 'Research', position: 'left'},
+        {type: 'docSidebar', sidebarId: 'researchSideBar', position: 'left', label: 'Research'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/sonephyo/llm-routing-bench',
           label: 'GitHub',
           position: 'right',
         },
@@ -101,46 +80,38 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Documentation',
           items: [
             {
-              label: 'Tutorial',
+              label: 'Getting Started',
               to: '/docs/intro',
             },
           ],
         },
         {
-          title: 'Community',
+          title: 'Research',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
+              label: 'Motivation',
+              to: '/docs/research/motivation',
             },
           ],
         },
         {
-          title: 'More',
+          title: 'Project',
           items: [
             {
-              label: 'Research',
-              to: '/research',
+              label: 'GitHub',
+              href: 'https://github.com/sonephyo/llm-routing-bench',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'Issues',
+              href: 'https://github.com/sonephyo/llm-routing-bench/issues',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} llm-routing-bench. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

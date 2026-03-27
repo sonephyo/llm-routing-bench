@@ -10,8 +10,7 @@ health:
 	@echo "Sending test request to router..."
 	@curl -s -X POST "http://localhost:7999/v1/completions" \
 		-H "Content-Type: application/json" \
-		-d '{"model": "$(MODEL)", "prompt": "The following is a detailed history of computer science", "max_tokens": 150}' > /dev/null
-	@echo "Request done"
+		-d '{"model": "$(MODEL)", "prompt": "The following is a detailed history of computer science", "max_tokens": 150}'
 
 local-test:
 	@echo "Testing Backend 1..."
