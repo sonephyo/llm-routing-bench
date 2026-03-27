@@ -13,8 +13,6 @@ The primary systems this benchmark runs on top of:
 
 **SGLang** [[paper](https://arxiv.org/abs/2312.07104)] — a structured generation language and runtime that uses RadixAttention to share KV cache across requests with common prefixes. Relevant to this research because its caching behavior interacts directly with routing decisions around KV cache locality.
 
-**TensorRT-LLM** — NVIDIA's inference optimization library. Focuses on kernel-level optimizations and continuous batching. Represents the high-performance closed ecosystem.
-
 **Orca** [[paper](https://www.usenix.org/conference/osdi22/presentation/yu)] — an early and influential work on iteration-level scheduling for LLM serving. Introduced the concept of continuous batching, where the serving system does not wait for all requests in a batch to finish before starting new ones. This significantly improves GPU utilization and is now standard in most serving systems.
 
 ---
@@ -34,12 +32,6 @@ The primary systems this benchmark runs on top of:
 **The Power of Two Choices** [[paper](https://www.eecs.harvard.edu/~michaelm/postscripts/handbook2001.pdf)] — the foundational result showing that choosing the least loaded of two randomly selected servers, rather than one random server, reduces the maximum load from O(log n / log log n) to O(log log n). Used in the consistent hashing variant in this benchmark.
 
 **Join-Idle-Queue** — a load balancing scheme that routes new requests to idle workers preferentially, avoiding unnecessary queuing. Has been shown to outperform round-robin under high load variance, which is characteristic of LLM workloads.
-
----
-
-## Metastable Failures in Distributed Systems
-
-**Metastability in Distributed Systems** [[paper](https://www.usenix.org/conference/osdi22/presentation/huang-lexiang)] — describes a class of failures where a system under high load reaches a stable but degraded state that persists even after the triggering load spike subsides. Relevant to LLM serving because overloaded routing decisions can create feedback loops — long queues slow throughput, which causes more queue buildup — that are difficult to recover from without shedding load.
 
 ---
 
