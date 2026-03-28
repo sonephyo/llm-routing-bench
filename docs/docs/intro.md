@@ -11,7 +11,7 @@ To read more about this project motivation and system architecture, refer to [Re
 
 ## Architecture
 
-<img id="architecture-diagram" src="/img/architecture-diagram.png" alt="Architecture Diagram" width="500" />
+<img id="architecture-diagram" src={require('/img/architecture-diagram.png').default} alt="Architecture Diagram" width="500" />
 
 ## Modes
 
