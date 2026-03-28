@@ -4,7 +4,7 @@
 
 MODEL = mistralai/Mistral-7B-v0.1
 
-.PHONY: up down health test logs logs-backend-1 logs-backend-2 clean test-servers-up
+.PHONY: up down health test logs logs-backend-1 logs-backend-2 clean test-servers-up docs
 
 health:
 	@echo "Sending test request to router..."
@@ -39,3 +39,6 @@ local-up:
 
 local-down:
 	docker compose -f docker-compose.dev.yml down
+
+docs:
+	cd ./docs && npm start
