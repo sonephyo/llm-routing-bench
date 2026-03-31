@@ -9,14 +9,20 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0']
+              device_ids: ["0"]
               capabilities: [gpu]
     command: --model mistralai/Mistral-7B-v0.1
     ipc: host
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
   backend-2:
     image: vllm/vllm-openai:latest
-    # internal: backend-2:8000 
+    # internal: backend-2:8000
     volumes:
       - /tmp/mistral-cache:/root/.cache/huggingface
     deploy:
@@ -24,10 +30,16 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['1']
+              device_ids: ["1"]
               capabilities: [gpu]
     command: --model mistralai/Mistral-7B-v0.1
     ipc: host
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
   router:
     environment:
@@ -40,8 +52,10 @@ services:
     ports:
       - "7999:7999"
     depends_on:
-      - backend-1
-      - backend-2
+      backend-1:
+        condition: service_healthy
+      backend-2:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
@@ -72,7 +86,7 @@ services:
       - grafana-data:/var/lib/grafana
     depends_on:
       prometheus:
-        condition: service_healthy 
+        condition: service_healthy
 
 volumes:
   grafana-data:
