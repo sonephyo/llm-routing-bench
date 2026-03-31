@@ -3,7 +3,6 @@ package scraper
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/prometheus/common/expfmt"

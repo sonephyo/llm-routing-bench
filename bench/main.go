@@ -19,7 +19,7 @@ func main() {
 	duration := time.Duration(*seconds) * time.Second
 	targeter := vegeta.NewStaticTargeter(vegeta.Target{
 		Method: "GET",
-		URL: "http://localhost:7999",
+		URL:    "http://localhost:7999",
 	})
 	attacker := vegeta.NewAttacker()
 

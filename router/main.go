@@ -53,7 +53,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("No backend is being returned")
 		return
 	}
-	
+
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -168,7 +168,7 @@ func main() {
 	case "consistanthashing":
 		rr = consistanthashing.NewConsistantHash(backends)
 	case "leastqueue":
-		rr = leastqueue.NewLeastQueue(backends, 250 * time.Millisecond)
+		rr = leastqueue.NewLeastQueue(backends, 250*time.Millisecond)
 	default:
 		log.Fatalln("Invalid lbStrategy")
 	}

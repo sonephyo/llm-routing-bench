@@ -34,7 +34,7 @@ func (lq *LeastQueue) pollLoop(interval time.Duration) {
 	defer ticker.Stop()
 	for range ticker.C {
 		lq.poll()
-	}	
+	}
 }
 
 // Update lq.cache with lastest retrieved from vllm
@@ -46,7 +46,7 @@ func (lq *LeastQueue) poll() {
 		})
 		if err != nil {
 			log.Printf("warn: failed to scrape %s: %v", lq.backends[i].BackendURI, err)
-            continue
+			continue
 		}
 
 		queueDepth := metrics["vllm:num_requests_running"] + metrics["vllm:num_requests_waiting"]
@@ -66,7 +66,7 @@ func (lq *LeastQueue) Route(r *http.Request) *backend.Backend {
 	lq.mu.RLock()
 	defer lq.mu.RUnlock()
 
-	for i:= range lq.backends {
+	for i := range lq.backends {
 		depth := lq.cache[lq.backends[i].BackendURI]
 		if depth < minVal {
 			selectedServer = &lq.backends[i]
