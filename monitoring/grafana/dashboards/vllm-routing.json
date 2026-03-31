@@ -126,6 +126,50 @@
           "interval": "5s"
         }
       ]
+    },
+    {
+      "id": 7,
+      "title": "Request Rate per Backend",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(lb_requests_total[10s])",
+          "legendFormat": "{{backend}}",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Router - CPU Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(process_cpu_seconds_total[10s])",
+          "legendFormat": "CPU seconds",
+          "interval": "1s"
+        }
+      ]
     }
   ]
 }
