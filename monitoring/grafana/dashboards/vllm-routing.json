@@ -4,7 +4,11 @@
   "timezone": "browser",
   "schemaVersion": 16,
   "version": 0,
-  "refresh": "5s",
+  "refresh": "1s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
@@ -21,7 +25,7 @@
           "expr": "vllm:num_requests_waiting",
           "legendFormat": "{{backend}}",
           "refId": "A",
-          "interval": "5s"
+          "interval": "1s"
         }
       ]
     },
@@ -40,7 +44,7 @@
           "expr": "vllm:kv_cache_usage_perc",
           "legendFormat": "{{backend}}",
           "refId": "A",
-          "interval": "5s"
+          "interval": "1s"
         }
       ],
       "fieldConfig": {
@@ -63,10 +67,10 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(vllm:time_to_first_token_seconds_bucket[1m]))",
+          "expr": "histogram_quantile(0.95, rate(vllm:time_to_first_token_seconds_bucket[10s]))",
           "legendFormat": "{{backend}} p95",
           "refId": "A",
-          "interval": "5s"
+          "interval": "1s"
         }
       ]
     },
@@ -82,10 +86,10 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket[1m]))",
+          "expr": "histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket[10s]))",
           "legendFormat": "{{backend}} p95",
           "refId": "A",
-          "interval": "5s"
+          "interval": "1s"
         }
       ]
     },
@@ -104,13 +108,13 @@
           "expr": "vllm:num_requests_running",
           "legendFormat": "{{backend}}",
           "refId": "A",
-          "interval": "5s"
+          "interval": "1s"
         }
       ]
     },
     {
       "id": 6,
-      "title": "Token Processing Rate",
+      "title": "Token Processing Rate (10s)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -120,16 +124,16 @@
       },
       "targets": [
         {
-          "expr": "rate(vllm:generation_tokens_total[1m])",
+          "expr": "rate(vllm:generation_tokens_total[10s])",
           "legendFormat": "{{backend}} tokens/sec",
           "refId": "A",
-          "interval": "5s"
+          "interval": "1s"
         }
       ]
     },
     {
       "id": 7,
-      "title": "Request Rate per Backend",
+      "title": "Request Rate per Backend (10s)",
       "type": "timeseries",
       "gridPos": {
         "x": 0,
@@ -151,7 +155,7 @@
     },
     {
       "id": 8,
-      "title": "Router - CPU Rate",
+      "title": "Router - CPU Rate (10s)",
       "type": "timeseries",
       "gridPos": {
         "x": 12,
