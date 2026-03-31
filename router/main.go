@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -167,7 +168,7 @@ func main() {
 	case "consistanthashing":
 		rr = consistanthashing.NewConsistantHash(backends)
 	case "leastqueue":
-		rr = leastqueue.NewLeastQueue(backends)
+		rr = leastqueue.NewLeastQueue(backends, 250 * time.Millisecond)
 	default:
 		log.Fatalln("Invalid lbStrategy")
 	}

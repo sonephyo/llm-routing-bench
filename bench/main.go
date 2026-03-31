@@ -13,6 +13,7 @@ func main() {
 
 	freq := flag.Int("freq", 1, "number of requests per second")
 	seconds := flag.Int("duration", 10, "duration in seconds")
+	flag.Parse()
 
 	rate := vegeta.Rate{Freq: *freq, Per: time.Second}
 	duration := time.Duration(*seconds) * time.Second

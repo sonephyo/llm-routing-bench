@@ -24,8 +24,8 @@ func GetFilteredMetrics(url string, keep []string) (map[string]float64, error) {
 
 	parser := expfmt.NewTextParser(model.UTF8Validation)
 	mf, err := parser.TextToMetricFamilies(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+	if err != nil && len(mf) == 0 {
+		return nil, err
 	}
 
 	keepSet := make(map[string]bool)
