@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"time"
 
 	vegeta "github.com/tsenart/vegeta/v12/lib"
@@ -17,11 +18,18 @@ func main() {
 
 	rate := vegeta.Rate{Freq: *freq, Per: time.Second}
 	duration := time.Duration(*seconds) * time.Second
+
+	reqBody := `{"model": "mistralai/Mistral-7B-v0.1", "prompt": "The following is a detailed history of computer science from the 1940s through the present day, covering key innovations in hardware, software, networking, and artificial intelligence.", "max_tokens": 1000}`
+
 	targeter := vegeta.NewStaticTargeter(vegeta.Target{
-		Method: "GET",
+		Method: "POST",
 		URL:    "http://localhost:7999",
+		Body:   []byte(reqBody),
+		Header: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
 	})
-	attacker := vegeta.NewAttacker()
+	attacker := vegeta.NewAttacker(vegeta.Timeout(300 * time.Second))
 
 	var metrics vegeta.Metrics
 	for res := range attacker.Attack(targeter, rate, duration, "Big Bang") {
