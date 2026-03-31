@@ -14,7 +14,7 @@ services:
     command: --model mistralai/Mistral-7B-v0.1
     ipc: host
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -35,7 +35,7 @@ services:
     command: --model mistralai/Mistral-7B-v0.1
     ipc: host
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -52,10 +52,8 @@ services:
     ports:
       - "7999:7999"
     depends_on:
-      backend-1:
-        condition: service_healthy
-      backend-2:
-        condition: service_healthy
+      - backend-1
+      - backend-2
 
   prometheus:
     image: prom/prometheus:latest
