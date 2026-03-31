@@ -12,7 +12,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "Queue Depth (Requests)",
+      "title": "Total Queue Depth (Waiting + Running)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -22,8 +22,8 @@
       },
       "targets": [
         {
-          "expr": "vllm:num_requests_waiting",
-          "legendFormat": "{{backend}}",
+          "expr": "vllm:num_requests_waiting + vllm:num_requests_running",
+          "legendFormat": "{{backend}} total queued",
           "refId": "A",
           "interval": "1s"
         }
@@ -31,7 +31,7 @@
     },
     {
       "id": 2,
-      "title": "KV Cache Usage",
+      "title": "KV Cache Usage (%)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -57,7 +57,7 @@
     },
     {
       "id": 3,
-      "title": "Time to First Token (p95)",
+      "title": "Time to First Token p95 (sec, 10s avg)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -76,7 +76,7 @@
     },
     {
       "id": 4,
-      "title": "E2E Latency (p95)",
+      "title": "E2E Request Latency p95 (sec, 10s avg)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -95,7 +95,7 @@
     },
     {
       "id": 5,
-      "title": "Active Requests",
+      "title": "Active Requests (Running)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -114,7 +114,7 @@
     },
     {
       "id": 6,
-      "title": "Token Processing Rate (10s)",
+      "title": "Token Generation Rate (tokens/sec, 10s avg)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -131,9 +131,9 @@
         }
       ]
     },
-    {
+{
       "id": 7,
-      "title": "Request Rate per Backend (10s)",
+      "title": "Inbound Request Rate per Backend (req/sec, 10s avg)",
       "type": "timeseries",
       "gridPos": {
         "x": 0,
@@ -155,7 +155,7 @@
     },
     {
       "id": 8,
-      "title": "Router - CPU Rate (10s)",
+      "title": "vLLM Backend CPU Usage (cores/sec, 10s avg)",
       "type": "timeseries",
       "gridPos": {
         "x": 12,
@@ -169,8 +169,30 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "rate(process_cpu_seconds_total[10s])",
-          "legendFormat": "CPU seconds",
+          "expr": "rate(process_cpu_seconds_total{job=~\"vllm-.*\"}[10s])",
+          "legendFormat": "{{backend}} - {{instance}}",
+          "interval": "1s"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Router CPU Usage (cores/sec, 10s avg)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(process_cpu_seconds_total{component=\"router\"}[10s])",
+          "legendFormat": "router - {{instance}}",
           "interval": "1s"
         }
       ]
