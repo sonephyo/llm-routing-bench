@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,13 +14,13 @@ func GetFilteredMetrics(url string, keep []string) (map[string]float64, error) {
 
 	resp, err := http.Get(url + "/metrics")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		log.Fatalf("unexpected status %d from %s/metrics: %s", resp.StatusCode, url, string(body))
+		return nil, fmt.Errorf("unexpected status %d from %s/metrics: %s", resp.StatusCode, url, string(body))
 	}
 
 	parser := expfmt.NewTextParser(model.UTF8Validation)
