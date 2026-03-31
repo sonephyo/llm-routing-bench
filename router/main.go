@@ -50,19 +50,19 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 	// Select backend to send out request
 	selectedBackend := lb.router.Route(r)
 	if selectedBackend == nil {
-		log.Fatalln("No backend is being returned")
+		http.Error(w, "no backend available", http.StatusServiceUnavailable)
 		return
 	}
 
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
 	switch mode {
 	// Local mode uses fake servers (HTTP servers) on local machine
 	case "local":
 		if r.Method != "GET" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			response := ServerResponse{
 				Message:  "Request not supported",
 				Status:   "Error",
@@ -78,13 +78,15 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		resp, err := http.Get(selectedBackend.BackendURI)
 		if err != nil {
-			log.Fatalln(err)
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
 		}
 		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalln(err)
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
 		}
 
 		response := ServerResponse{
@@ -101,6 +103,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 	// Local mode uses vllm servers as defined in docker-compose.yml
 	case "server":
 		if r.Method != "POST" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			response := ServerResponse{
 				Message:  "Request not supported",
 				Status:   "Error",
@@ -116,18 +119,21 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Fatalln(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		resp, err := http.Post(selectedBackend.BackendURI+"/v1/completions", "application/json", bytes.NewReader(bodyBytes))
 		if err != nil {
-			log.Fatalln(err)
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
 		}
 		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalln(err)
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
 		}
 
 		response := ServerResponse{
@@ -189,5 +195,5 @@ func main() {
 
 	http.HandleFunc("/", lbserver.backendHandler)
 
-	http.ListenAndServe(":7999", nil)
+	log.Fatal(http.ListenAndServe(":7999", nil))
 }
