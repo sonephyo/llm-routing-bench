@@ -52,8 +52,10 @@ services:
     ports:
       - "7999:7999"
     depends_on:
-      - backend-1
-      - backend-2
+      backend-1:
+        condition: service_healthy
+      backend-2:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
@@ -65,8 +67,6 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-    depends_on:
-      - router
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
       interval: 5s
