@@ -55,6 +55,10 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metrics.RequestCount.WithLabelValues(selectedBackend.BackendURI).Inc()
+	start := time.Now()
+	defer func() {
+		metrics.RequestLatency.WithLabelValues(selectedBackend.BackendURI).Observe(time.Since(start).Seconds())
+	}()
 
 	w.Header().Set("Content-Type", "application/json")
 
