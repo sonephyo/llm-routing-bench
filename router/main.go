@@ -39,12 +39,6 @@ type ServerResponse struct {
 	Response string `json:"response"`
 }
 
-type vllmBackendStruct struct {
-	Model     string `json:"model"`
-	Prompt    string `json:"prompt"`
-	MaxTokens int64  `json:"max_tokens"`
-}
-
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Select backend to send out request

@@ -66,8 +66,8 @@ func MakeTargeter(tokenSize int, promptType string) vegeta.Targeter {
 		prompt = makeLongPrompt(tokenSize)
 	}
 	body := fmt.Sprintf(
-		`{"model": %q, "prompt": %q, "max_tokens": %d}`,
-		modelName, prompt, tokenSize,
+		`{"model": %q, "prompt": %q, "min_tokens": %d, "max_tokens": %d, "ignore_eos": true"}`,
+		modelName, prompt, tokenSize, tokenSize,
 	)
 	return vegeta.NewStaticTargeter(vegeta.Target{
 		Method: "POST",
