@@ -163,7 +163,13 @@ func ScrapeBackendMetrics(promAddr string) (*backendSnapshot, error) {
 func deltaSimpleMap(before, after map[string]float64) map[string]float64 {
 	out := make(map[string]float64, len(after))
 	for k, v := range after {
-		out[k] = v - before[k]
+		if delta := v - before[k]; delta >= 0 {
+			out[k] = delta
+		} else {
+			// Counter reset (e.g. container restarted) — after value is already
+			// relative to the reset, so use it directly.
+			out[k] = v
+		}
 	}
 	return out
 }
@@ -172,13 +178,24 @@ func deltaHistogramMap(before, after map[string]HistogramData) map[string]Histog
 	out := make(map[string]HistogramData, len(after))
 	for backend, a := range after {
 		b := before[backend]
+		// If count went backwards the counter reset — use after values directly.
+		reset := a.Count-b.Count < 0
 		d := HistogramData{
 			Buckets: make(map[string]float64, len(a.Buckets)),
-			Sum:     a.Sum - b.Sum,
-			Count:   a.Count - b.Count,
+		}
+		if reset {
+			d.Sum = a.Sum
+			d.Count = a.Count
+		} else {
+			d.Sum = a.Sum - b.Sum
+			d.Count = a.Count - b.Count
 		}
 		for le, cnt := range a.Buckets {
-			d.Buckets[le] = cnt - b.Buckets[le]
+			if reset {
+				d.Buckets[le] = cnt
+			} else {
+				d.Buckets[le] = cnt - b.Buckets[le]
+			}
 		}
 		out[backend] = d
 	}
