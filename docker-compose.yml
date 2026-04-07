@@ -67,6 +67,7 @@ services:
     build:
       context: .
       dockerfile: bench/Dockerfile
+    user: "${UID}:${GID}"
     environment:
       LB_STRATEGY: ${LB_STRATEGY}
       MODE: ${MODE}

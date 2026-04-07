@@ -40,7 +40,7 @@ func main() {
 	outputDir := "bench-results/" + strategy
 
 	loadPatterns := []string{"uniform", "bursty", "rampup"}
-	tokenSizes := []int{100, 1000, 10000}
+	tokenSizes := []int{100, 500, 2000}
 	promptTypes := []string{"short", "long"}
 
 	total := len(loadPatterns) * len(tokenSizes) * len(promptTypes)
