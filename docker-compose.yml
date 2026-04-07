@@ -56,6 +56,29 @@ services:
         condition: service_healthy
       backend-2:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7999/metrics"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  bench:
+    build:
+      context: .
+      dockerfile: bench/Dockerfile
+    environment:
+      LB_STRATEGY: ${LB_STRATEGY}
+      MODE: ${MODE}
+      ROUTER_URL: http://router:7999
+      PROMETHEUS_ADDR: http://prometheus:9090
+    volumes:
+      - ./bench-results:/app/bench-results
+    depends_on:
+      router:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest

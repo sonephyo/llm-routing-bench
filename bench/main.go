@@ -1,42 +1,146 @@
-// bench/cmd/bench/main.go
+// bench/main.go is an entry for running the benchmark
+// - checks .env for reading the LBStrategy that is running
+
 package main
 
 import (
-	"flag"
-	"fmt"
-	"net/http"
+	"bufio"
+	"log"
+	"os"
+	"strings"
 	"time"
 
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
 func main() {
+	env := loadEnv("../.env")
 
-	freq := flag.Int("freq", 1, "number of requests per second")
-	seconds := flag.Int("duration", 10, "duration in seconds")
-	flag.Parse()
-
-	rate := vegeta.Rate{Freq: *freq, Per: time.Second}
-	duration := time.Duration(*seconds) * time.Second
-
-	reqBody := `{"model": "mistralai/Mistral-7B-v0.1", "prompt": "The following is a detailed history of computer science from the 1940s through the present day, covering key innovations in hardware, software, networking, and artificial intelligence.", "max_tokens": 1000}`
-
-	targeter := vegeta.NewStaticTargeter(vegeta.Target{
-		Method: "POST",
-		URL:    "http://localhost:7999",
-		Body:   []byte(reqBody),
-		Header: http.Header{
-			"Content-Type": []string{"application/json"},
-		},
-	})
-	attacker := vegeta.NewAttacker(vegeta.Timeout(300 * time.Second))
-
-	var metrics vegeta.Metrics
-	for res := range attacker.Attack(targeter, rate, duration, "Big Bang") {
-		metrics.Add(res)
+	strategy := env["LB_STRATEGY"]
+	if strategy == "" {
+		strategy = os.Getenv("LB_STRATEGY")
 	}
-	metrics.Close()
+	if strategy == "" {
+		strategy = "unknown"
+	}
 
-	fmt.Printf("99th percentile: %s\n", metrics.Latencies.P99)
-	fmt.Printf("Throughput: %f\n", metrics.Throughput)
+	mode := env["MODE"]
+	if mode == "" {
+		mode = os.Getenv("MODE")
+	}
+
+	promAddr := "http://localhost:7779"
+	if mode == "local" {
+		promAddr = "http://localhost:7998"
+	}
+	if addr := os.Getenv("PROMETHEUS_ADDR"); addr != "" {
+		promAddr = addr
+	}
+
+	outputDir := "bench-results/" + strategy
+
+	loadPatterns := []string{"uniform", "bursty", "rampup"}
+	tokenSizes := []int{100, 1000, 10000}
+	promptTypes := []string{"short", "long"}
+
+	total := len(loadPatterns) * len(tokenSizes) * len(promptTypes)
+	run := 0
+
+	for _, lp := range loadPatterns {
+		for _, ts := range tokenSizes {
+			for _, pt := range promptTypes {
+				run++
+				log.Printf("[%d/%d] strategy=%s pattern=%s tokens=%d prompt=%s",
+					run, total, strategy, lp, ts, pt)
+
+				targeter := MakeTargeter(ts, pt)
+
+				preRM, err := ScrapeRouterMetrics(promAddr)
+				log.Println("Scrape router metrics before")
+				for k, v := range preRM.RequestsTotal {
+					log.Printf("%s = %f", k, v)
+				}
+				for k, v := range preRM.DurationHistogram {
+					log.Printf("%s = %+v", k, v)
+				}
+				if err != nil {
+					log.Printf("warn: pre-scrape router metrics: %v", err)
+				}
+				preBM, _ := ScrapeBackendMetrics(promAddr)
+
+				startTime := time.Now()
+
+				var vm vegeta.Metrics
+				switch lp {
+				case "uniform":
+					vm = RunUniform(targeter)
+				case "bursty":
+					vm = RunBursty(targeter)
+				case "rampup":
+					vm = RunRampUp(targeter)
+				}
+
+				postRM, err := ScrapeRouterMetrics(promAddr)
+				if err != nil {
+					log.Printf("warn: post-scrape router metrics: %v", err)
+				}
+				postBM, _ := ScrapeBackendMetrics(promAddr)
+
+				result := ExperimentResult{
+					Metadata: ExperimentMetadata{
+						Strategy:    strategy,
+						LoadPattern: lp,
+						TokenSize:   ts,
+						PromptType:  pt,
+						StartTime:   startTime,
+					},
+					VegetaMetrics:  vm,
+					RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
+					BackendMetrics: DeltaBackendMetrics(preBM, postBM),
+				}
+
+				if err := WriteResult(result, outputDir); err != nil {
+					log.Printf("error: write result for %s_%d_%s: %v", lp, ts, pt, err)
+				} else {
+					log.Printf("Note: saved  p99=%s throughput=%.2f req/s success=%.1f%%",
+						vm.Latencies.P99,
+						vm.Throughput,
+						vm.Success*100,
+					)
+				}
+
+				if run < total {
+					waitForQueueDrain(promAddr)
+					log.Printf("  cooldown 60s before next run...")
+					time.Sleep(60 * time.Second)
+				}
+			}
+		}
+	}
+
+	log.Printf("Done. Results written to %s/", outputDir)
+}
+
+// loadEnv reads a .env file and returns a map of key=value pairs.
+// Lines starting with # are ignored.
+func loadEnv(path string) map[string]string {
+	env := make(map[string]string)
+	f, err := os.Open(path)
+	if err != nil {
+		return env
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			env[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+		}
+	}
+	return env
 }

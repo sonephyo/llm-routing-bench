@@ -19,3 +19,5 @@ llm-routing-bench
 vendor/
 
 mylog.md
+mynotes.md
+bench/bench-results/
