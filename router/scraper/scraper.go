@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 )
 
 func GetFilteredMetrics(url string, keep []string) (map[string]float64, error) {
-
-	resp, err := http.Get(url + "/metrics")
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(url + "/metrics")
 	if err != nil {
 		return nil, err
 	}

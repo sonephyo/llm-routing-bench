@@ -60,13 +60,6 @@ func main() {
 				targeter := MakeTargeter(ts, pt)
 
 				preRM, err := ScrapeRouterMetrics(promAddr)
-				log.Println("Scrape router metrics before")
-				for k, v := range preRM.RequestsTotal {
-					log.Printf("%s = %f", k, v)
-				}
-				for k, v := range preRM.DurationHistogram {
-					log.Printf("%s = %+v", k, v)
-				}
 				if err != nil {
 					log.Printf("warn: pre-scrape router metrics: %v", err)
 				}
@@ -104,7 +97,7 @@ func main() {
 						PromptType:  pt,
 						StartTime:   startTime,
 					EndTime:     endTime,
-					},
+				},
 					VegetaMetrics:  vm,
 					RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
 					BackendMetrics: DeltaBackendMetrics(preBM, postBM),
