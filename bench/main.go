@@ -86,6 +86,10 @@ func main() {
 
 				endTime := time.Now()
 
+				waitForQueueDrain(promAddr)
+				log.Printf("  waiting %s for Prometheus scrape alignment...", scrapeInterval+scrapeBuffer)
+				time.Sleep(scrapeInterval + scrapeBuffer)
+
 				postRM, err := ScrapeRouterMetrics(promAddr)
 				if err != nil {
 					log.Printf("warn: post-scrape router metrics: %v", err)
@@ -117,7 +121,6 @@ func main() {
 				}
 
 				if run < total {
-					waitForQueueDrain(promAddr)
 					log.Printf("  cooldown 60s before next run...")
 					time.Sleep(60 * time.Second)
 				}

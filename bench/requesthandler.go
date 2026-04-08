@@ -10,9 +10,11 @@ import (
 )
 
 const (
-	shortPrompt   = `Summarize the water cycle.`
-	modelName     = "mistralai/Mistral-7B-v0.1"
-	attackTimeout = 3600 * time.Second
+	shortPrompt    = `Summarize the water cycle.`
+	modelName      = "mistralai/Mistral-7B-v0.1"
+	attackTimeout  = 3600 * time.Second
+	scrapeInterval = 1 * time.Second
+	scrapeBuffer   = 2 * time.Second
 )
 
 // longPromptBase is a ~6000-character passage used as the source for long prompts.
