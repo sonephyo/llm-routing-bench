@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -86,14 +85,6 @@ func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.R
 	for res := range attacker.Attack(targeter, rate, dur, "") {
 		metrics.Add(res)
 	}
-}
-
-func runWarmup(targeter vegeta.Targeter) {
-	attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-	var m vegeta.Metrics
-	runPhase(attacker, targeter, vegeta.Rate{Freq: 2, Per: time.Second}, 5*time.Second, &m)
-	m.Close()
-	log.Printf("warm-up complete (%d requests, %.1f%% success)", m.Requests, m.Success*100)
 }
 
 func RunUniform(targeter vegeta.Targeter) vegeta.Metrics {

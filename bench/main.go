@@ -58,7 +58,6 @@ func main() {
 					run, total, strategy, lp, ts, pt)
 
 				targeter := MakeTargeter(ts, pt)
-				runWarmup(targeter)
 
 				preRM, err := ScrapeRouterMetrics(promAddr)
 				if err != nil {
