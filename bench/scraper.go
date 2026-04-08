@@ -24,10 +24,12 @@ type promResult struct {
 	Value  []interface{}     `json:"value"` // [timestamp_float, value_string]
 }
 
+var promClient = &http.Client{Timeout: 10 * time.Second}
+
 func queryProm(promAddr, query string) ([]promResult, error) {
 	reqURL := promAddr + "/api/v1/query?query=" + url.QueryEscape(query)
 	log.Printf("Address = %s", reqURL)
-	resp, err := http.Get(reqURL)
+	resp, err := promClient.Get(reqURL)
 	if err != nil {
 		return nil, err
 	}

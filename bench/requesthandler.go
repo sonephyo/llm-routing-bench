@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -68,7 +69,7 @@ func MakeTargeter(tokenSize int, promptType string) vegeta.Targeter {
 		prompt = makeLongPrompt(tokenSize)
 	}
 	body := fmt.Sprintf(
-		`{"model": %q, "prompt": %q, "min_tokens": %d, "max_tokens": %d, "ignore_eos": true"}`,
+		`{"model": %q, "prompt": %q, "min_tokens": %d, "max_tokens": %d, "ignore_eos": true}`,
 		modelName, prompt, tokenSize, tokenSize,
 	)
 	return vegeta.NewStaticTargeter(vegeta.Target{
@@ -85,6 +86,14 @@ func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.R
 	for res := range attacker.Attack(targeter, rate, dur, "") {
 		metrics.Add(res)
 	}
+}
+
+func runWarmup(targeter vegeta.Targeter) {
+	attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
+	var m vegeta.Metrics
+	runPhase(attacker, targeter, vegeta.Rate{Freq: 2, Per: time.Second}, 5*time.Second, &m)
+	m.Close()
+	log.Printf("warm-up complete (%d requests, %.1f%% success)", m.Requests, m.Success*100)
 }
 
 func RunUniform(targeter vegeta.Targeter) vegeta.Metrics {
