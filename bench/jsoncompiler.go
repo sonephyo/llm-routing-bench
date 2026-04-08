@@ -9,8 +9,11 @@ import (
 
 // <load_pattern>_<token_size>_<prompt_type>.json
 func WriteResult(result ExperimentResult, outputDir string) error {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0777); err != nil {
 		return fmt.Errorf("create output dir: %w", err)
+	}
+	if err := os.Chmod(outputDir, 0777); err != nil {
+		return fmt.Errorf("chmod output dir: %w", err)
 	}
 
 	filename := fmt.Sprintf("%s_%d_%s.json",
@@ -25,8 +28,11 @@ func WriteResult(result ExperimentResult, outputDir string) error {
 		return fmt.Errorf("marshal result: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, 0666); err != nil {
 		return fmt.Errorf("write file %s: %w", path, err)
+	}
+	if err := os.Chmod(path, 0666); err != nil {
+		return fmt.Errorf("chmod result file: %w", err)
 	}
 	return nil
 }

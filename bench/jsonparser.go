@@ -12,6 +12,7 @@ type ExperimentMetadata struct {
 	TokenSize   int       `json:"token_size"`
 	PromptType  string    `json:"prompt_type"`
 	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
 }
 
 type HistogramData struct {
