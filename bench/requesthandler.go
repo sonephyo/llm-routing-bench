@@ -40,10 +40,10 @@ The 2010s accelerated machine learning from an academic pursuit to an industrial
 
 // makeLongPrompt returns a prefix of longPromptBase sized to ~60% of tokenSize
 // input tokens, keeping total context (input + output) safely within 4096 tokens.
-// Approximation: 1 token ≈ 5.5 characters (measured on longPromptBase: 6000 chars / 1100 tokens).
+// Approximation: 1 token ≈ 4.45 characters (measured on longPromptBase via vLLM /tokenize: 6108 chars / 1373 tokens).
 // The cut snaps back to the nearest space to avoid splitting mid-word or mid-rune.
 func makeLongPrompt(tokenSize int) string {
-	targetChars := tokenSize * 60 / 100 * 11 / 2 // 60% of tokenSize * 5.5 chars/token
+	targetChars := tokenSize * 60 / 100 * 89 / 20 // 60% of tokenSize * 4.45 chars/token
 	if targetChars >= len(longPromptBase) {
 		return longPromptBase
 	}
