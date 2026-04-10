@@ -39,9 +39,12 @@ func main() {
 	}
 
 	baseDir := "bench-results/" + strategy
-	expNum := nextExperimentNumber(baseDir)
-	outputDir := fmt.Sprintf("%s/experiment_%d", baseDir, expNum)
-	log.Printf("Experiment #%d — results will be saved to %s/", expNum, outputDir)
+	experimentID := env["EXPERIMENT_ID"]
+	if experimentID == "" {
+		experimentID = os.Getenv("EXPERIMENT_ID")
+	}
+	outputDir := fmt.Sprintf("%s/experiment_%s", baseDir, experimentID)
+	log.Printf("Experiment #%s — results will be saved to %s/", experimentID, outputDir)
 
 	loadPatterns := []string{"uniform", "bursty", "rampup"}
 	tokenSizes := []int{100, 500, 2000}
@@ -126,28 +129,6 @@ func main() {
 	}
 
 	log.Printf("Done. Results written to %s/", outputDir)
-}
-
-// nextExperimentNumber scans baseDir for subdirectories named "experiment_N"
-// and returns the next available number (max existing + 1, or 1 if none).
-func nextExperimentNumber(baseDir string) int {
-	entries, err := os.ReadDir(baseDir)
-	if err != nil {
-		return 1
-	}
-	max := 0
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		var n int
-		if _, err := fmt.Sscanf(e.Name(), "experiment_%d", &n); err == nil {
-			if n > max {
-				max = n
-			}
-		}
-	}
-	return max + 1
 }
 
 // loadEnv reads a .env file and returns a map of key=value pairs.
