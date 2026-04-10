@@ -10,6 +10,7 @@ import (
 	"llm-routing-bench/router/loadbalancer/consistanthashing"
 	"llm-routing-bench/router/loadbalancer/leastkvcache"
 	"llm-routing-bench/router/loadbalancer/leastqueue"
+	"llm-routing-bench/router/loadbalancer/random"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
 	"llm-routing-bench/router/metrics"
 	"log"
@@ -168,6 +169,8 @@ func main() {
 	}
 
 	switch lbStrategy {
+	case "random":
+		rr = random.NewRandom(backends)
 	case "roundrobin":
 		rr = roundrobin.NewRoundRobin(backends)
 	case "consistanthashing":

@@ -1,4 +1,4 @@
-// Copyright 2026. All rights reserved.
+// NOTE: will not be used in research analysis due to nature of bench simulation 
 package consistanthashing
 
 import (
