@@ -81,22 +81,25 @@ func MakeTargeter(tokenSize int, promptType string) vegeta.Targeter {
 	})
 }
 
-func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.Rate, dur time.Duration, metrics *vegeta.Metrics) {
+func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.Rate, dur time.Duration, metrics *vegeta.Metrics, latencies *[]int64) {
 	for res := range attacker.Attack(targeter, rate, dur, "") {
 		metrics.Add(res)
+		*latencies = append(*latencies, res.Latency.Nanoseconds())
 	}
 }
 
-func RunUniform(targeter vegeta.Targeter) vegeta.Metrics {
+func RunUniform(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
 	var m vegeta.Metrics
+	var lats []int64
 	attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-	runPhase(attacker, targeter, vegeta.Rate{Freq: 10, Per: time.Second}, 10*time.Second, &m)
+	runPhase(attacker, targeter, vegeta.Rate{Freq: 10, Per: time.Second}, 10*time.Second, &m, &lats)
 	m.Close()
-	return m
+	return m, lats
 }
 
-func RunBursty(targeter vegeta.Targeter) vegeta.Metrics {
+func RunBursty(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
 	var m vegeta.Metrics
+	var lats []int64
 	phases := []struct {
 		rate vegeta.Rate
 		dur  time.Duration
@@ -107,20 +110,21 @@ func RunBursty(targeter vegeta.Targeter) vegeta.Metrics {
 	}
 	for _, p := range phases {
 		attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-		runPhase(attacker, targeter, p.rate, p.dur, &m)
+		runPhase(attacker, targeter, p.rate, p.dur, &m, &lats)
 	}
 	m.Close()
-	return m
+	return m, lats
 }
 
-func RunRampUp(targeter vegeta.Targeter) vegeta.Metrics {
+func RunRampUp(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
 	var m vegeta.Metrics
+	var lats []int64
 	rates := []int{1, 4, 7, 10, 13, 15}
 	for _, r := range rates {
 		attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-		runPhase(attacker, targeter, vegeta.Rate{Freq: r, Per: time.Second}, 15*time.Second, &m)
+		runPhase(attacker, targeter, vegeta.Rate{Freq: r, Per: time.Second}, 15*time.Second, &m, &lats)
 	}
 	m.Close()
-	return m
+	return m, lats
 }
 

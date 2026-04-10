@@ -68,13 +68,14 @@ func main() {
 				startTime := time.Now()
 
 				var vm vegeta.Metrics
+				var rawLats []int64
 				switch lp {
 				case "uniform":
-					vm = RunUniform(targeter)
+					vm, rawLats = RunUniform(targeter)
 				case "bursty":
-					vm = RunBursty(targeter)
+					vm, rawLats = RunBursty(targeter)
 				case "rampup":
-					vm = RunRampUp(targeter)
+					vm, rawLats = RunRampUp(targeter)
 				}
 
 				endTime := time.Now()
@@ -101,6 +102,7 @@ func main() {
 					VegetaMetrics:  vm,
 					RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
 					BackendMetrics: DeltaBackendMetrics(preBM, postBM),
+					RawLatenciesNs: rawLats,
 				}
 
 				if err := WriteResult(result, outputDir); err != nil {

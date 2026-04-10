@@ -41,8 +41,9 @@ type BackendMetrics struct {
 }
 
 type ExperimentResult struct {
-	Metadata       ExperimentMetadata `json:"metadata"`
-	VegetaMetrics  vegeta.Metrics     `json:"vegeta_metrics"`
-	RouterMetrics  RouterMetrics      `json:"router_metrics"`
-	BackendMetrics *BackendMetrics    `json:"backend_metrics,omitempty"`
+	Metadata        ExperimentMetadata `json:"metadata"`
+	VegetaMetrics   vegeta.Metrics     `json:"vegeta_metrics"`
+	RouterMetrics   RouterMetrics      `json:"router_metrics"`
+	BackendMetrics  *BackendMetrics    `json:"backend_metrics,omitempty"`
+	RawLatenciesNs  []int64            `json:"raw_latencies_ns"`
 }
