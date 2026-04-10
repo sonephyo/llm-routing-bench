@@ -8,6 +8,7 @@ import (
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
 	"llm-routing-bench/router/loadbalancer/consistanthashing"
+	"llm-routing-bench/router/loadbalancer/leastkvcache"
 	"llm-routing-bench/router/loadbalancer/leastqueue"
 	"llm-routing-bench/router/loadbalancer/roundrobin"
 	"llm-routing-bench/router/metrics"
@@ -173,6 +174,8 @@ func main() {
 		rr = consistanthashing.NewConsistantHash(backends)
 	case "leastqueue":
 		rr = leastqueue.NewLeastQueue(backends, 250*time.Millisecond)
+	case "leastkvcache":
+		rr = leastkvcache.NewLeastKVCache(backends, 250*time.Millisecond)
 	default:
 		log.Fatalln("Invalid lbStrategy")
 	}
