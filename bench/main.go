@@ -43,6 +43,9 @@ func main() {
 	if experimentID == "" {
 		experimentID = os.Getenv("EXPERIMENT_ID")
 	}
+	if experimentID == "" {
+		log.Fatal("EXPERIMENT_ID must be set in .env or environment")
+	}
 	outputDir := fmt.Sprintf("%s/experiment_%s", baseDir, experimentID)
 	log.Printf("Experiment #%s — results will be saved to %s/", experimentID, outputDir)
 
@@ -107,7 +110,7 @@ func main() {
 					VegetaMetrics:  vm,
 					RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
 					BackendMetrics: DeltaBackendMetrics(preBM, postBM, gauges),
-					RawRequests: rawReqs,
+					RawRequests:    rawReqs,
 				}
 
 				if err := WriteResult(result, outputDir); err != nil {

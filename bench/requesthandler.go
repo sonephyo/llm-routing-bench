@@ -130,4 +130,3 @@ func RunRampUp(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 	m.Close()
 	return m, reqs
 }
-

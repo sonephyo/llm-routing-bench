@@ -218,7 +218,6 @@ func queryHistogramByBackend(promAddr, metricName string) (map[string]HistogramD
 	return out, nil
 }
 
-
 type routerSnapshot struct {
 	RequestsTotal     map[string]float64
 	DurationHistogram map[string]HistogramData
