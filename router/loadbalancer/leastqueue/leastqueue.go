@@ -39,6 +39,7 @@ func (lq *LeastQueue) pollLoop(interval time.Duration) {
 
 // Update lq.cache with lastest retrieved from vllm
 func (lq *LeastQueue) poll() {
+	tempLQMap := make(map[string]float64)
 	for i := range lq.backends {
 		metrics, err := scraper.GetFilteredMetrics(lq.backends[i].BackendURI, []string{
 			"vllm:num_requests_running",
@@ -46,14 +47,17 @@ func (lq *LeastQueue) poll() {
 		})
 		if err != nil {
 			log.Printf("warn: failed to scrape %s: %v", lq.backends[i].BackendURI, err)
+			tempLQMap[lq.backends[i].BackendURI] = math.Inf(1)
 			continue
 		}
 
 		queueDepth := metrics["vllm:num_requests_running"] + metrics["vllm:num_requests_waiting"]
-		lq.mu.Lock()
-		lq.cache[lq.backends[i].BackendURI] = queueDepth
-		lq.mu.Unlock()
+		tempLQMap[lq.backends[i].BackendURI] = queueDepth
 	}
+
+	lq.mu.Lock()
+	defer lq.mu.Unlock()
+	lq.cache = tempLQMap
 }
 
 func (lq *LeastQueue) Route(r *http.Request) *backend.Backend {

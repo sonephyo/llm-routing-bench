@@ -31,20 +31,23 @@ func NewLeastKVCache(backends []backend.Backend, pollInterval time.Duration) *Le
 }
 
 func (lkv *LeastKVCache) poll() {
-	// Operation related to polling
+	tempKVMap := make(map[string]float64)
+
 	for i := range lkv.backends {
 		metrics, err := scraper.GetFilteredMetrics(lkv.backends[i].BackendURI, []string{
 			"vllm:kv_cache_usage_perc",
 		})
 		if err != nil {
 			log.Printf("warn: failed to scrape %s: %v", lkv.backends[i].BackendURI, err)
+			tempKVMap[lkv.backends[i].BackendURI] = math.Inf(1)
 			continue
 		}
-		lkv.mu.Lock()
-		lkv.cache[lkv.backends[i].BackendURI] = metrics["vllm:kv_cache_usage_perc"]
-		lkv.mu.Unlock()
+		tempKVMap[lkv.backends[i].BackendURI] = metrics["vllm:kv_cache_usage_perc"]
 	}
 
+	lkv.mu.Lock()
+	defer lkv.mu.Unlock()
+	lkv.cache = tempKVMap
 }
 
 func (lkv *LeastKVCache) pollLoop(pollInterval time.Duration) {
