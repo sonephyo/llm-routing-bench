@@ -81,25 +81,28 @@ func MakeTargeter(tokenSize int, promptType string) vegeta.Targeter {
 	})
 }
 
-func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.Rate, dur time.Duration, metrics *vegeta.Metrics, latencies *[]int64) {
+func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.Rate, dur time.Duration, metrics *vegeta.Metrics, reqs *[]RawRequest) {
 	for res := range attacker.Attack(targeter, rate, dur, "") {
 		metrics.Add(res)
-		*latencies = append(*latencies, res.Latency.Nanoseconds())
+		*reqs = append(*reqs, RawRequest{
+			TimestampNs: res.Timestamp.UnixNano(),
+			LatencyNs:   res.Latency.Nanoseconds(),
+		})
 	}
 }
 
-func RunUniform(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
+func RunUniform(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 	var m vegeta.Metrics
-	var lats []int64
+	var reqs []RawRequest
 	attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-	runPhase(attacker, targeter, vegeta.Rate{Freq: 10, Per: time.Second}, 10*time.Second, &m, &lats)
+	runPhase(attacker, targeter, vegeta.Rate{Freq: 10, Per: time.Second}, 10*time.Second, &m, &reqs)
 	m.Close()
-	return m, lats
+	return m, reqs
 }
 
-func RunBursty(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
+func RunBursty(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 	var m vegeta.Metrics
-	var lats []int64
+	var reqs []RawRequest
 	phases := []struct {
 		rate vegeta.Rate
 		dur  time.Duration
@@ -110,21 +113,21 @@ func RunBursty(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
 	}
 	for _, p := range phases {
 		attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-		runPhase(attacker, targeter, p.rate, p.dur, &m, &lats)
+		runPhase(attacker, targeter, p.rate, p.dur, &m, &reqs)
 	}
 	m.Close()
-	return m, lats
+	return m, reqs
 }
 
-func RunRampUp(targeter vegeta.Targeter) (vegeta.Metrics, []int64) {
+func RunRampUp(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 	var m vegeta.Metrics
-	var lats []int64
+	var reqs []RawRequest
 	rates := []int{1, 4, 7, 10, 13, 15}
 	for _, r := range rates {
 		attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-		runPhase(attacker, targeter, vegeta.Rate{Freq: r, Per: time.Second}, 15*time.Second, &m, &lats)
+		runPhase(attacker, targeter, vegeta.Rate{Freq: r, Per: time.Second}, 15*time.Second, &m, &reqs)
 	}
 	m.Close()
-	return m, lats
+	return m, reqs
 }
 

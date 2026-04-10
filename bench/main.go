@@ -68,17 +68,19 @@ func main() {
 				startTime := time.Now()
 
 				var vm vegeta.Metrics
-				var rawLats []int64
+				var rawReqs []RawRequest
 				switch lp {
 				case "uniform":
-					vm, rawLats = RunUniform(targeter)
+					vm, rawReqs = RunUniform(targeter)
 				case "bursty":
-					vm, rawLats = RunBursty(targeter)
+					vm, rawReqs = RunBursty(targeter)
 				case "rampup":
-					vm, rawLats = RunRampUp(targeter)
+					vm, rawReqs = RunRampUp(targeter)
 				}
 
 				endTime := time.Now()
+
+				gauges := ScrapeGaugeRanges(promAddr, startTime, endTime)
 
 				waitForQueueDrain(promAddr)
 				log.Printf("  waiting %s for Prometheus scrape alignment...", scrapeInterval+scrapeBuffer)
@@ -97,12 +99,12 @@ func main() {
 						TokenSize:   ts,
 						PromptType:  pt,
 						StartTime:   startTime,
-					EndTime:     endTime,
-				},
+						EndTime:     endTime,
+					},
 					VegetaMetrics:  vm,
 					RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
-					BackendMetrics: DeltaBackendMetrics(preBM, postBM),
-					RawLatenciesNs: rawLats,
+					BackendMetrics: DeltaBackendMetrics(preBM, postBM, gauges),
+					RawRequests: rawReqs,
 				}
 
 				if err := WriteResult(result, outputDir); err != nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -24,7 +25,110 @@ type promResult struct {
 	Value  []interface{}     `json:"value"` // [timestamp_float, value_string]
 }
 
+// promRangeResponse is the Prometheus /api/v1/query_range response envelope.
+type promRangeResponse struct {
+	Status string        `json:"status"`
+	Data   promRangeData `json:"data"`
+}
+
+type promRangeData struct {
+	Result []promRangeResult `json:"result"`
+}
+
+type promRangeResult struct {
+	Metric map[string]string `json:"metric"`
+	Values [][]interface{}   `json:"values"` // [[timestamp_float, value_string], ...]
+}
+
 var promClient = &http.Client{Timeout: 10 * time.Second}
+
+func queryPromRange(promAddr, query string, start, end time.Time, step time.Duration) ([]promRangeResult, error) {
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("start", fmt.Sprintf("%d", start.Unix()))
+	params.Set("end", fmt.Sprintf("%d", end.Unix()))
+	params.Set("step", fmt.Sprintf("%ds", int(step.Seconds())))
+	reqURL := promAddr + "/api/v1/query_range?" + params.Encode()
+
+	resp, err := promClient.Get(reqURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var pr promRangeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+		return nil, err
+	}
+	if pr.Status != "success" {
+		return nil, fmt.Errorf("prometheus range query failed: %s", pr.Status)
+	}
+	return pr.Data.Result, nil
+}
+
+// scrapeGaugeRange fetches a gauge metric over [start, end] and returns
+// min/max/mean per backend derived from the 1s-resolution time series.
+func scrapeGaugeRange(promAddr, metric string, start, end time.Time) map[string]GaugeSeries {
+	results, err := queryPromRange(promAddr, metric, start, end, time.Second)
+	if err != nil {
+		log.Printf("warn: range query %s: %v", metric, err)
+		return nil
+	}
+	out := make(map[string]GaugeSeries, len(results))
+	for _, r := range results {
+		backend := r.Metric["backend"]
+		if backend == "" {
+			backend = r.Metric["instance"]
+		}
+		var sum float64
+		mn := math.MaxFloat64
+		mx := -math.MaxFloat64
+		n := 0
+		for _, v := range r.Values {
+			if len(v) < 2 {
+				continue
+			}
+			s, ok := v[1].(string)
+			if !ok {
+				continue
+			}
+			f, err := strconv.ParseFloat(s, 64)
+			if err != nil {
+				continue
+			}
+			sum += f
+			if f < mn {
+				mn = f
+			}
+			if f > mx {
+				mx = f
+			}
+			n++
+		}
+		if n == 0 {
+			out[backend] = GaugeSeries{}
+			continue
+		}
+		out[backend] = GaugeSeries{Min: mn, Max: mx, Mean: sum / float64(n)}
+	}
+	return out
+}
+
+// gaugeRangeSnapshot holds min/max/mean time-series data for gauge metrics
+// captured via range queries over the experiment window.
+type gaugeRangeSnapshot struct {
+	NumRequestsWaiting map[string]GaugeSeries
+	NumRequestsRunning map[string]GaugeSeries
+	KVCacheUsagePerc   map[string]GaugeSeries
+}
+
+func ScrapeGaugeRanges(promAddr string, start, end time.Time) *gaugeRangeSnapshot {
+	return &gaugeRangeSnapshot{
+		NumRequestsWaiting: scrapeGaugeRange(promAddr, "vllm:num_requests_waiting", start, end),
+		NumRequestsRunning: scrapeGaugeRange(promAddr, "vllm:num_requests_running", start, end),
+		KVCacheUsagePerc:   scrapeGaugeRange(promAddr, "vllm:kv_cache_usage_perc", start, end),
+	}
+}
 
 func queryProm(promAddr, query string) ([]promResult, error) {
 	reqURL := promAddr + "/api/v1/query?query=" + url.QueryEscape(query)
@@ -121,12 +225,15 @@ type routerSnapshot struct {
 }
 
 type backendSnapshot struct {
-	NumRequestsWaiting    map[string]float64
-	NumRequestsRunning    map[string]float64
-	KVCacheUsagePerc      map[string]float64
 	GenerationTokensTotal map[string]float64
+	PreemptionsTotal      map[string]float64
+	PrefixCacheHits       map[string]float64
+	PrefixCacheQueries    map[string]float64
 	TTFTHistogram         map[string]HistogramData
 	E2EHistogram          map[string]HistogramData
+	QueueTimeHistogram    map[string]HistogramData
+	PrefillTimeHistogram  map[string]HistogramData
+	DecodeTimeHistogram   map[string]HistogramData
 }
 
 func ScrapeRouterMetrics(promAddr string) (routerSnapshot, error) {
@@ -142,23 +249,31 @@ func ScrapeRouterMetrics(promAddr string) (routerSnapshot, error) {
 }
 
 func ScrapeBackendMetrics(promAddr string) (*backendSnapshot, error) {
-	waiting, err := querySimpleByBackend(promAddr, "vllm:num_requests_waiting")
-	if err != nil || len(waiting) == 0 {
+	// Use num_requests_waiting as a probe — if absent, backends aren't up.
+	probe, err := querySimpleByBackend(promAddr, "vllm:num_requests_waiting")
+	if err != nil || len(probe) == 0 {
 		return nil, nil
 	}
-	running, _ := querySimpleByBackend(promAddr, "vllm:num_requests_running")
-	kv, _ := querySimpleByBackend(promAddr, "vllm:kv_cache_usage_perc")
 	genTokens, _ := querySimpleByBackend(promAddr, "vllm:generation_tokens_total")
+	preemptions, _ := querySimpleByBackend(promAddr, "vllm:num_preemptions_total")
+	prefixHits, _ := querySimpleByBackend(promAddr, "vllm:prefix_cache_hits_total")
+	prefixQueries, _ := querySimpleByBackend(promAddr, "vllm:prefix_cache_queries_total")
 	ttft, _ := queryHistogramByBackend(promAddr, "vllm:time_to_first_token_seconds")
 	e2e, _ := queryHistogramByBackend(promAddr, "vllm:e2e_request_latency_seconds")
+	queueTime, _ := queryHistogramByBackend(promAddr, "vllm:request_queue_time_seconds")
+	prefillTime, _ := queryHistogramByBackend(promAddr, "vllm:request_prefill_time_seconds")
+	decodeTime, _ := queryHistogramByBackend(promAddr, "vllm:request_decode_time_seconds")
 
 	return &backendSnapshot{
-		NumRequestsWaiting:    waiting,
-		NumRequestsRunning:    running,
-		KVCacheUsagePerc:      kv,
 		GenerationTokensTotal: genTokens,
+		PreemptionsTotal:      preemptions,
+		PrefixCacheHits:       prefixHits,
+		PrefixCacheQueries:    prefixQueries,
 		TTFTHistogram:         ttft,
 		E2EHistogram:          e2e,
+		QueueTimeHistogram:    queueTime,
+		PrefillTimeHistogram:  prefillTime,
+		DecodeTimeHistogram:   decodeTime,
 	}, nil
 }
 
@@ -204,14 +319,6 @@ func deltaHistogramMap(before, after map[string]HistogramData) map[string]Histog
 	return out
 }
 
-func gaugeSnapshotMap(before, after map[string]float64) map[string]GaugeSnapshot {
-	out := make(map[string]GaugeSnapshot, len(after))
-	for k, v := range after {
-		out[k] = GaugeSnapshot{Start: before[k], End: v}
-	}
-	return out
-}
-
 func DeltaRouterMetrics(before, after routerSnapshot) RouterMetrics {
 	return RouterMetrics{
 		LBRequestsTotal:          deltaSimpleMap(before.RequestsTotal, after.RequestsTotal),
@@ -245,16 +352,25 @@ func waitForQueueDrain(promAddr string) {
 	}
 }
 
-func DeltaBackendMetrics(before, after *backendSnapshot) *BackendMetrics {
+func DeltaBackendMetrics(before, after *backendSnapshot, gauges *gaugeRangeSnapshot) *BackendMetrics {
 	if before == nil || after == nil {
 		return nil
 	}
-	return &BackendMetrics{
-		NumRequestsWaiting:       gaugeSnapshotMap(before.NumRequestsWaiting, after.NumRequestsWaiting),
-		NumRequestsRunning:       gaugeSnapshotMap(before.NumRequestsRunning, after.NumRequestsRunning),
-		KVCacheUsagePerc:         gaugeSnapshotMap(before.KVCacheUsagePerc, after.KVCacheUsagePerc),
-		GenerationTokensTotal:    deltaSimpleMap(before.GenerationTokensTotal, after.GenerationTokensTotal),
-		TimeToFirstTokenSeconds:  deltaHistogramMap(before.TTFTHistogram, after.TTFTHistogram),
-		E2ERequestLatencySeconds: deltaHistogramMap(before.E2EHistogram, after.E2EHistogram),
+	bm := &BackendMetrics{
+		GenerationTokensTotal:     deltaSimpleMap(before.GenerationTokensTotal, after.GenerationTokensTotal),
+		NumPreemptions:            deltaSimpleMap(before.PreemptionsTotal, after.PreemptionsTotal),
+		PrefixCacheHits:           deltaSimpleMap(before.PrefixCacheHits, after.PrefixCacheHits),
+		PrefixCacheQueries:        deltaSimpleMap(before.PrefixCacheQueries, after.PrefixCacheQueries),
+		TimeToFirstTokenSeconds:   deltaHistogramMap(before.TTFTHistogram, after.TTFTHistogram),
+		E2ERequestLatencySeconds:  deltaHistogramMap(before.E2EHistogram, after.E2EHistogram),
+		RequestQueueTimeSeconds:   deltaHistogramMap(before.QueueTimeHistogram, after.QueueTimeHistogram),
+		RequestPrefillTimeSeconds: deltaHistogramMap(before.PrefillTimeHistogram, after.PrefillTimeHistogram),
+		RequestDecodeTimeSeconds:  deltaHistogramMap(before.DecodeTimeHistogram, after.DecodeTimeHistogram),
 	}
+	if gauges != nil {
+		bm.NumRequestsWaiting = gauges.NumRequestsWaiting
+		bm.NumRequestsRunning = gauges.NumRequestsRunning
+		bm.KVCacheUsagePerc = gauges.KVCacheUsagePerc
+	}
+	return bm
 }

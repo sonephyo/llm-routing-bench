@@ -21,9 +21,12 @@ type HistogramData struct {
 	Count   float64            `json:"count"`
 }
 
-type GaugeSnapshot struct {
-	Start float64 `json:"start"`
-	End   float64 `json:"end"`
+// GaugeSeries captures the min/max/mean of a gauge metric over the experiment
+// window via Prometheus range queries, replacing the meaningless start/end snapshot.
+type GaugeSeries struct {
+	Min  float64 `json:"min"`
+	Max  float64 `json:"max"`
+	Mean float64 `json:"mean"`
 }
 
 type RouterMetrics struct {
@@ -32,18 +35,32 @@ type RouterMetrics struct {
 }
 
 type BackendMetrics struct {
-	NumRequestsWaiting       map[string]GaugeSnapshot `json:"vllm_num_requests_waiting"`
-	NumRequestsRunning       map[string]GaugeSnapshot `json:"vllm_num_requests_running"`
-	KVCacheUsagePerc         map[string]GaugeSnapshot `json:"vllm_kv_cache_usage_perc"`
-	GenerationTokensTotal    map[string]float64       `json:"vllm_generation_tokens_total"`
-	TimeToFirstTokenSeconds  map[string]HistogramData `json:"vllm_time_to_first_token_seconds"`
-	E2ERequestLatencySeconds map[string]HistogramData `json:"vllm_e2e_request_latency_seconds"`
+	NumRequestsWaiting        map[string]GaugeSeries   `json:"vllm_num_requests_waiting"`
+	NumRequestsRunning        map[string]GaugeSeries   `json:"vllm_num_requests_running"`
+	KVCacheUsagePerc          map[string]GaugeSeries   `json:"vllm_kv_cache_usage_perc"`
+	GenerationTokensTotal     map[string]float64       `json:"vllm_generation_tokens_total"`
+	NumPreemptions            map[string]float64       `json:"vllm_num_preemptions"`
+	PrefixCacheHits           map[string]float64       `json:"vllm_prefix_cache_hits"`
+	PrefixCacheQueries        map[string]float64       `json:"vllm_prefix_cache_queries"`
+	TimeToFirstTokenSeconds   map[string]HistogramData `json:"vllm_time_to_first_token_seconds"`
+	E2ERequestLatencySeconds  map[string]HistogramData `json:"vllm_e2e_request_latency_seconds"`
+	RequestQueueTimeSeconds   map[string]HistogramData `json:"vllm_request_queue_time_seconds"`
+	RequestPrefillTimeSeconds map[string]HistogramData `json:"vllm_request_prefill_time_seconds"`
+	RequestDecodeTimeSeconds  map[string]HistogramData `json:"vllm_request_decode_time_seconds"`
+}
+
+// RawRequest captures per-request data for phase-level latency analysis.
+// TimestampNs is Unix nanoseconds when the request was dispatched;
+// LatencyNs is the end-to-end response time in nanoseconds.
+type RawRequest struct {
+	TimestampNs int64 `json:"timestamp_ns"`
+	LatencyNs   int64 `json:"latency_ns"`
 }
 
 type ExperimentResult struct {
-	Metadata        ExperimentMetadata `json:"metadata"`
-	VegetaMetrics   vegeta.Metrics     `json:"vegeta_metrics"`
-	RouterMetrics   RouterMetrics      `json:"router_metrics"`
-	BackendMetrics  *BackendMetrics    `json:"backend_metrics,omitempty"`
-	RawLatenciesNs  []int64            `json:"raw_latencies_ns"`
+	Metadata       ExperimentMetadata `json:"metadata"`
+	VegetaMetrics  vegeta.Metrics     `json:"vegeta_metrics"`
+	RouterMetrics  RouterMetrics      `json:"router_metrics"`
+	BackendMetrics *BackendMetrics    `json:"backend_metrics,omitempty"`
+	RawRequests    []RawRequest       `json:"raw_requests"`
 }
