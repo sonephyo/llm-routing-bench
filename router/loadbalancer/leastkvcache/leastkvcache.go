@@ -2,6 +2,9 @@ package leastkvcache
 
 import (
 	"llm-routing-bench/router/backend"
+	"llm-routing-bench/router/scraper"
+	"log"
+	"math"
 	"net/http"
 	"sync"
 	"time"
@@ -9,35 +12,48 @@ import (
 
 type LeastKVCache struct {
 	backends []backend.Backend
-	mu sync.RWMutex
-	cache map[string]float64
+	mu       sync.RWMutex
+	cache    map[string]float64
 }
 
 func NewLeastKVCache(backends []backend.Backend, pollInterval time.Duration) *LeastKVCache {
-	
+
 	lkv := LeastKVCache{
 		backends: backends,
-		cache: make(map[string]float64),
+		cache:    make(map[string]float64),
 	}
 
 	lkv.poll()
 
-	go lkv.pollInterval(pollInterval)
-	
+	go lkv.pollLoop(pollInterval)
 
 	return &lkv
 }
 
 func (lkv *LeastKVCache) poll() {
 	// Operation related to polling
+	for i := range lkv.backends {
+		metrics, err := scraper.GetFilteredMetrics(lkv.backends[i].BackendURI, []string{
+			"vllm:kv_cache_usage_perc",
+		})
+		if err != nil {
+			log.Printf("warn: failed to scrape %s: %v", lkv.backends[i].BackendURI, err)
+			continue
+		}
+		lkv.mu.Lock()
+		lkv.cache[lkv.backends[i].BackendURI] = metrics["vllm:kv_cache_usage_perc"]
+		lkv.mu.Unlock()
+	}
+
 }
 
-func (lkv *LeastKVCache) pollInterval(pollInterval time.Duration) {
-	timer := time.NewTimer(pollInterval)
-	go func() {
-		<-timer.C
+func (lkv *LeastKVCache) pollLoop(pollInterval time.Duration) {
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+	for range ticker.C {
 		lkv.poll()
-	}()
+	}
+
 }
 
 func (lkv *LeastKVCache) Route(r *http.Request) *backend.Backend {
@@ -45,8 +61,11 @@ func (lkv *LeastKVCache) Route(r *http.Request) *backend.Backend {
 		return nil
 	}
 	var selectedBackend *backend.Backend
-	var minPercentage float64 = 101
-	
+	var minPercentage float64 = math.Inf(1)
+
+	lkv.mu.RLock()
+	defer lkv.mu.RUnlock()
+
 	for i := range lkv.backends {
 		kvcacheVal := lkv.cache[lkv.backends[i].BackendURI]
 		if kvcacheVal < minPercentage {
