@@ -95,7 +95,7 @@ func RunUniform(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 	var m vegeta.Metrics
 	var reqs []RawRequest
 	attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-	runPhase(attacker, targeter, vegeta.Rate{Freq: 10, Per: time.Second}, 10*time.Second, &m, &reqs)
+	runPhase(attacker, targeter, vegeta.Rate{Freq: 10, Per: time.Second}, 100*time.Second, &m, &reqs)
 	m.Close()
 	return m, reqs
 }
@@ -107,9 +107,9 @@ func RunBursty(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 		rate vegeta.Rate
 		dur  time.Duration
 	}{
-		{vegeta.Rate{Freq: 2, Per: time.Second}, 30 * time.Second},
-		{vegeta.Rate{Freq: 20, Per: time.Second}, 10 * time.Second},
-		{vegeta.Rate{Freq: 2, Per: time.Second}, 20 * time.Second},
+		{vegeta.Rate{Freq: 2, Per: time.Second}, 100 * time.Second},
+		{vegeta.Rate{Freq: 20, Per: time.Second}, 35 * time.Second},
+		{vegeta.Rate{Freq: 2, Per: time.Second}, 50 * time.Second},
 	}
 	for _, p := range phases {
 		attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
@@ -125,7 +125,7 @@ func RunRampUp(targeter vegeta.Targeter) (vegeta.Metrics, []RawRequest) {
 	rates := []int{1, 4, 7, 10, 13, 15}
 	for _, r := range rates {
 		attacker := vegeta.NewAttacker(vegeta.Timeout(attackTimeout))
-		runPhase(attacker, targeter, vegeta.Rate{Freq: r, Per: time.Second}, 15*time.Second, &m, &reqs)
+		runPhase(attacker, targeter, vegeta.Rate{Freq: r, Per: time.Second}, 20*time.Second, &m, &reqs)
 	}
 	m.Close()
 	return m, reqs
