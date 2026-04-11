@@ -71,6 +71,7 @@ services:
     environment:
       LB_STRATEGY: ${LB_STRATEGY}
       MODE: ${MODE}
+      EXPERIMENT_ID: ${EXPERIMENT_ID}
       ROUTER_URL: http://router:7999
       PROMETHEUS_ADDR: http://prometheus:9090
     volumes:
