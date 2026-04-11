@@ -11,7 +11,7 @@ services:
             - driver: nvidia
               device_ids: ["0"]
               capabilities: [gpu]
-    command: --model mistralai/Mistral-7B-v0.1
+    command: --model mistralai/Mistral-7B-v0.1 --disable-prefix-caching
     ipc: host
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -32,7 +32,7 @@ services:
             - driver: nvidia
               device_ids: ["1"]
               capabilities: [gpu]
-    command: --model mistralai/Mistral-7B-v0.1
+    command: --model mistralai/Mistral-7B-v0.1 --disable-prefix-caching
     ipc: host
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
