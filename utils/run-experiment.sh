@@ -22,15 +22,15 @@ UID=$UID_VAL
 EOF
 
     docker compose down router
-    docker compose up router -d
+    DOCKER_BUILDKIT=0 docker compose --env-file "$ENV_FILE" up router -d
 
     # Wait for router to be healthy before starting bench
     echo "    Waiting for router to be ready..."
     sleep 3
 
-    docker compose up bench -d
+    DOCKER_BUILDKIT=0 docker compose --env-file "$ENV_FILE" up bench --build -d
     echo "    Waiting for bench to finish..."
-    docker compose wait bench || true
+    docker compose --env-file "$ENV_FILE" wait bench || true
 
     echo "==> Done: $strategy"
 done
