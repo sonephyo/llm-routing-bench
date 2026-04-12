@@ -12,7 +12,7 @@ import (
 const (
 	shortPrompt    = `Summarize the water cycle.`
 	modelName      = "mistralai/Mistral-7B-v0.1"
-	attackTimeout  = 3600 * time.Second
+	attackTimeout  = 7200 * time.Second
 	scrapeInterval = 1 * time.Second
 	scrapeBuffer   = 2 * time.Second
 )
