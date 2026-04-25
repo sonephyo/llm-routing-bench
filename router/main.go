@@ -41,6 +41,22 @@ type ServerResponse struct {
 	Response string `json:"response"`
 }
 
+func writeJSONResponse(w http.ResponseWriter, response ServerResponse) {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("error encoding response: %v", err)
+	}
+}
+
+// rejectMethod writes a 405 JSON error and returns true if r.Method != method.
+func rejectMethod(w http.ResponseWriter, r *http.Request, method string) bool {
+	if r.Method == method {
+		return false
+	}
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	writeJSONResponse(w, ServerResponse{Message: "Request not supported", Status: "Error"})
+	return true
+}
+
 func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Select backend to send out request
@@ -61,19 +77,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 	switch mode {
 	// Local mode uses fake servers (HTTP servers) on local machine
 	case "local":
-		if r.Method != "GET" {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			response := ServerResponse{
-				Message:  "Request not supported",
-				Status:   "Error",
-				Response: "",
-			}
-
-			err := json.NewEncoder(w).Encode(response)
-			if err != nil {
-				log.Printf("error encoding response: %v", err)
-				return
-			}
+		if rejectMethod(w, r, "GET") {
 			return
 		}
 		resp, err := http.Get(selectedBackend.BackendURI)
@@ -89,32 +93,14 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response := ServerResponse{
+		writeJSONResponse(w, ServerResponse{
 			Message:  "Selected Port Number: " + selectedBackend.BackendURI,
 			Status:   "OK",
 			Response: string(body),
-		}
-
-		err = json.NewEncoder(w).Encode(response)
-		if err != nil {
-			log.Printf("error encoding response: %v", err)
-			return
-		}
+		})
 	// Server mode uses vllm servers as defined in docker-compose.yml
 	case "server":
-		if r.Method != "POST" {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			response := ServerResponse{
-				Message:  "Request not supported",
-				Status:   "Error",
-				Response: "",
-			}
-
-			err := json.NewEncoder(w).Encode(response)
-			if err != nil {
-				log.Printf("error encoding response: %v", err)
-				return
-			}
+		if rejectMethod(w, r, "POST") {
 			return
 		}
 		bodyBytes, err := io.ReadAll(r.Body)
@@ -136,18 +122,11 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response := ServerResponse{
+		writeJSONResponse(w, ServerResponse{
 			Message:  "Selected Port Number: " + selectedBackend.BackendURI,
 			Status:   "OK",
 			Response: string(body),
-		}
-
-		err = json.NewEncoder(w).Encode(response)
-		if err != nil {
-			log.Printf("error encoding response: %v", err)
-			return
-		}
-
+		})
 	}
 }
 
