@@ -51,7 +51,7 @@ If you downloaded the model to a different path, update both `backend-1` and `ba
 make server-up router=roundrobin
 ```
 
-Replace `roundrobin` with any valid strategy: `consistanthashing` or `leastqueue`.
+Replace `roundrobin` with any valid strategy: `consistenthashing` or `leastqueue`.
 
 ## Stopping the Stack
 

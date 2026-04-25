@@ -15,7 +15,7 @@ Instead of real vLLM instances, dev mode starts two simple HTTP servers that ret
 make local-up router=roundrobin
 ```
 
-Replace `roundrobin` with any valid strategy: `consistanthashing` | `leastqueue` | `least-kvcache`.
+Replace `roundrobin` with any valid strategy: `consistenthashing` | `leastqueue` | `least-kvcache`.
 
 ## Example request
 

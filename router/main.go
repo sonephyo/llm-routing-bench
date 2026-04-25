@@ -7,7 +7,7 @@ import (
 	"io"
 	"llm-routing-bench/router/backend"
 	"llm-routing-bench/router/loadbalancer"
-	"llm-routing-bench/router/loadbalancer/consistanthashing"
+	"llm-routing-bench/router/loadbalancer/consistenthashing"
 	"llm-routing-bench/router/loadbalancer/leastkvcache"
 	"llm-routing-bench/router/loadbalancer/leastqueue"
 	"llm-routing-bench/router/loadbalancer/random"
@@ -173,8 +173,8 @@ func main() {
 		rr = random.NewRandom(backends)
 	case "roundrobin":
 		rr = roundrobin.NewRoundRobin(backends)
-	case "consistanthashing":
-		rr = consistanthashing.NewConsistantHash(backends)
+	case "consistenthashing":
+		rr = consistenthashing.NewConsistentHash(backends)
 	case "leastqueue":
 		rr = leastqueue.NewLeastQueue(backends, 250*time.Millisecond)
 	case "leastkvcache":

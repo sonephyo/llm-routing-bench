@@ -21,7 +21,7 @@ Simple and stateless. Makes no assumptions about request cost or backend load. W
 
 ---
 
-### `consistanthashing`
+### `consistenthashing`
 
 Uses an FNV-32a hash of the request URL to deterministically map requests to a backend on a consistent hash ring.
 

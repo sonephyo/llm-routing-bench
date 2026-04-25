@@ -23,7 +23,7 @@ Grafana    (:7780 / :8000)  <-- dashboards
 | Strategy | Flag | Description |
 |---|---|---|
 | Round Robin | `roundrobin` | Cycles through backends sequentially |
-| Consistent Hashing | `consistanthashing` | FNV-32a hash of request URL maps to a backend on a consistent ring |
+| Consistent Hashing | `consistenthashing` | FNV-32a hash of request URL maps to a backend on a consistent ring |
 | Least Queue | `leastqueue` | Scrapes `vllm:num_requests_running` from each backend and routes to the least loaded (WIP) |
 | Least KV Cache | `least-kvcache` | TBA |
 
@@ -49,7 +49,7 @@ cp .env.example .env
 
 ```
 MODE=server           # or local
-LB_STRATEGY=roundrobin  # roundrobin | consistanthashing | leastqueue
+LB_STRATEGY=roundrobin  # roundrobin | consistenthashing | leastqueue
 ```
 
 ### Dev Mode (no GPU required)
