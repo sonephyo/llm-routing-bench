@@ -25,7 +25,7 @@ cp .env.example .env
 | Field | Description | Valid values |
 |---|---|---|
 | `MODE` | Which backend type to use | `server`, `local` |
-| `LB_STRATEGY` | Routing strategy for the load balancer | `roundrobin`, `consistanthashing`, `leastqueue` |
+| `LB_STRATEGY` | Routing strategy for the load balancer | `roundrobin`, `consistenthashing`, `leastqueue` |
 
 Example:
 

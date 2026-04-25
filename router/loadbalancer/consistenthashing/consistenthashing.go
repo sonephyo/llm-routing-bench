@@ -1,5 +1,5 @@
-// NOTE: will not be used in research analysis due to nature of bench simulation 
-package consistanthashing
+// NOTE: will not be used in research analysis due to nature of bench simulation
+package consistenthashing
 
 import (
 	"hash/fnv"
@@ -15,7 +15,7 @@ type CHashing struct {
 	Ring       map[uint32]*backend.Backend
 }
 
-func NewConsistantHash(backends []backend.Backend) *CHashing {
+func NewConsistentHash(backends []backend.Backend) *CHashing {
 	cHashInstance := CHashing{
 		Ring: make(map[uint32]*backend.Backend),
 	}

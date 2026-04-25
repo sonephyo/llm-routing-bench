@@ -22,7 +22,7 @@ All common operations are wrapped in `make` targets. The `router=<strategy>` var
 The `router=` variable accepts:
 
 - `roundrobin`
-- `consistanthashing`
+- `consistenthashing`
 - `leastqueue`
 
 Example:
