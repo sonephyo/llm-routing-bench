@@ -100,7 +100,7 @@ func (lb *LBServer) backendHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("error encoding response: %v", err)
 			return
 		}
-	// Local mode uses vllm servers as defined in docker-compose.yml
+	// Server mode uses vllm servers as defined in docker-compose.yml
 	case "server":
 		if r.Method != "POST" {
 			w.WriteHeader(http.StatusMethodNotAllowed)
