@@ -97,7 +97,7 @@ func main() {
 		iterationInstance := IterationConfig{
 			targeter:    MakeTargeter(tokenSizes, promptTypes),
 			loadPattern: lp,
-			tokenSize: -1,
+			tokenSize: 0,
 			promptType: "heterogenous",
 			promAddr:    promAddr,
 			strategy:    strategy,
