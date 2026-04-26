@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -62,26 +63,29 @@ var routerURL = func() string {
 	return "http://localhost:7999"
 }()
 
-func MakeTargeter(tokenSize int, promptType string) vegeta.Targeter {
-	prompt := shortPrompt
-	if promptType == "long" {
-		prompt = makeLongPrompt(tokenSize)
-	}
-	body := fmt.Sprintf(
-		`{"model": %q, "prompt": %q, "min_tokens": %d, "max_tokens": %d, "ignore_eos": true}`,
-		modelName, prompt, tokenSize, tokenSize,
-	)
-	return vegeta.NewStaticTargeter(vegeta.Target{
-		Method: "POST",
-		URL:    routerURL,
-		Body:   []byte(body),
-		Header: http.Header{
+func MakeTargeter(tokenSizes []int, promptTypes []string) vegeta.Targeter {
+	return func(t *vegeta.Target) error {
+		ts := tokenSizes[rand.Intn(len(tokenSizes))]
+		pt := promptTypes[rand.Intn(len(promptTypes))]
+		prompt := shortPrompt
+		if pt == "long" {
+			prompt = makeLongPrompt(ts)
+		}
+		body := fmt.Sprintf(
+			`{"model": %q, "prompt": %q, "min_tokens": %d, "max_tokens": %d, "ignore_eos": true}`,
+			modelName, prompt, ts, ts,
+		)
+		t.Method = "POST"
+		t.URL = routerURL
+		t.Body = []byte(body)
+		t.Header = http.Header{
 			"Content-Type": []string{"application/json"},
-		},
-	})
+		}
+		return nil
+	}
 }
 
-func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.Rate, dur time.Duration, metrics *vegeta.Metrics, reqs *[]RawRequest) {
+func runPhase(attacker *vegeta.Attacker, targeter vegeta.Targeter, rate vegeta.Pacer, dur time.Duration, metrics *vegeta.Metrics, reqs *[]RawRequest) {
 	for res := range attacker.Attack(targeter, rate, dur, "") {
 		metrics.Add(res)
 		*reqs = append(*reqs, RawRequest{

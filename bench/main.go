@@ -14,6 +14,16 @@ import (
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
+type IterationConfig struct {
+	targeter    vegeta.Targeter
+	loadPattern string
+	tokenSize   int
+	promptType  string
+	promAddr    string
+	strategy    string
+	outputDir   string
+}
+
 func main() {
 	env := loadEnv("../.env")
 
@@ -62,67 +72,16 @@ func main() {
 				run++
 				log.Printf("[%d/%d] strategy=%s pattern=%s tokens=%d prompt=%s",
 					run, total, strategy, lp, ts, pt)
-
-				targeter := MakeTargeter(ts, pt)
-
-				preRM, err := ScrapeRouterMetrics(promAddr)
-				if err != nil {
-					log.Printf("warn: pre-scrape router metrics: %v", err)
+				iterationInstance := IterationConfig{
+					targeter:    MakeTargeter([]int{ts}, []string{pt}),
+					loadPattern: lp,
+					tokenSize:   ts,
+					promptType:  pt,
+					promAddr:    promAddr,
+					strategy:    strategy,
+					outputDir:   outputDir,
 				}
-				preBM, _ := ScrapeBackendMetrics(promAddr)
-
-				startTime := time.Now()
-
-				var vm vegeta.Metrics
-				var rawReqs []RawRequest
-				switch lp {
-				case "uniform":
-					vm, rawReqs = RunUniform(targeter)
-				case "bursty":
-					vm, rawReqs = RunBursty(targeter)
-				case "rampup":
-					vm, rawReqs = RunRampUp(targeter)
-				}
-
-				endTime := time.Now()
-
-				gauges := ScrapeGaugeRanges(promAddr, startTime, endTime)
-
-				waitForQueueDrain(promAddr)
-				log.Printf("  waiting %s for Prometheus scrape alignment...", scrapeInterval+scrapeBuffer)
-				time.Sleep(scrapeInterval + scrapeBuffer)
-
-				postRM, err := ScrapeRouterMetrics(promAddr)
-				if err != nil {
-					log.Printf("warn: post-scrape router metrics: %v", err)
-				}
-				postBM, _ := ScrapeBackendMetrics(promAddr)
-
-				result := ExperimentResult{
-					Metadata: ExperimentMetadata{
-						Strategy:    strategy,
-						LoadPattern: lp,
-						TokenSize:   ts,
-						PromptType:  pt,
-						StartTime:   startTime,
-						EndTime:     endTime,
-					},
-					VegetaMetrics:  vm,
-					RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
-					BackendMetrics: DeltaBackendMetrics(preBM, postBM, gauges),
-					RawRequests:    rawReqs,
-				}
-
-				if err := WriteResult(result, outputDir); err != nil {
-					log.Printf("error: write result for %s_%d_%s: %v", lp, ts, pt, err)
-				} else {
-					log.Printf("Note: saved  p99=%s throughput=%.2f req/s success=%.1f%%",
-						vm.Latencies.P99,
-						vm.Throughput,
-						vm.Success*100,
-					)
-				}
-
+				iterationInstance.startIteration()
 				if run < total {
 					log.Printf("  cooldown 60s before next run...")
 					time.Sleep(60 * time.Second)
@@ -131,7 +90,88 @@ func main() {
 		}
 	}
 
+	run = 0
+	total = len(loadPatterns)
+	for _, lp := range loadPatterns {
+		run++
+		iterationInstance := IterationConfig{
+			targeter:    MakeTargeter(tokenSizes, promptTypes),
+			loadPattern: lp,
+			tokenSize: -1,
+			promptType: "heterogenous",
+			promAddr:    promAddr,
+			strategy:    strategy,
+			outputDir:   outputDir,
+		}
+		iterationInstance.startIteration()
+		if run < total {
+			log.Printf("  cooldown 60s before next run...")
+			time.Sleep(60 * time.Second)
+		}
+
+	}
+
 	log.Printf("Done. Results written to %s/", outputDir)
+}
+
+func (iConfig *IterationConfig) startIteration() {
+	preRM, err := ScrapeRouterMetrics(iConfig.promAddr)
+	if err != nil {
+		log.Printf("warn: pre-scrape router metrics: %v", err)
+	}
+	preBM, _ := ScrapeBackendMetrics(iConfig.promAddr)
+
+	startTime := time.Now()
+
+	var vm vegeta.Metrics
+	var rawReqs []RawRequest
+	switch iConfig.loadPattern {
+	case "uniform":
+		vm, rawReqs = RunUniform(iConfig.targeter)
+	case "bursty":
+		vm, rawReqs = RunBursty(iConfig.targeter)
+	case "rampup":
+		vm, rawReqs = RunRampUp(iConfig.targeter)
+	}
+
+	endTime := time.Now()
+
+	gauges := ScrapeGaugeRanges(iConfig.promAddr, startTime, endTime)
+
+	waitForQueueDrain(iConfig.promAddr)
+	log.Printf("  waiting %s for Prometheus scrape alignment...", scrapeInterval+scrapeBuffer)
+	time.Sleep(scrapeInterval + scrapeBuffer)
+
+	postRM, err := ScrapeRouterMetrics(iConfig.promAddr)
+	if err != nil {
+		log.Printf("warn: post-scrape router metrics: %v", err)
+	}
+	postBM, _ := ScrapeBackendMetrics(iConfig.promAddr)
+
+	result := ExperimentResult{
+		Metadata: ExperimentMetadata{
+			Strategy:    iConfig.strategy,
+			LoadPattern: iConfig.loadPattern,
+			TokenSize:   iConfig.tokenSize,
+			PromptType:  iConfig.promptType,
+			StartTime:   startTime,
+			EndTime:     endTime,
+		},
+		VegetaMetrics:  vm,
+		RouterMetrics:  DeltaRouterMetrics(preRM, postRM),
+		BackendMetrics: DeltaBackendMetrics(preBM, postBM, gauges),
+		RawRequests:    rawReqs,
+	}
+
+	if err := WriteResult(result, iConfig.outputDir); err != nil {
+		log.Printf("error: write result for %s_%d_%s: %v", iConfig.loadPattern, iConfig.tokenSize, iConfig.promptType, err)
+	} else {
+		log.Printf("Note: saved  p99=%s throughput=%.2f req/s success=%.1f%%",
+			vm.Latencies.P99,
+			vm.Throughput,
+			vm.Success*100,
+		)
+	}
 }
 
 // loadEnv reads a .env file and returns a map of key=value pairs.
